@@ -8,7 +8,7 @@ const LiftXddd = document.getElementById("lift")
 
 
 
-let OP1, OP2, OP3, OP4, speedDisplay,Lift;
+let OP1, OP2, OP3, OP4, speedDisplay, Lift;
 let batteryDisplay;
 let chargeDisplay;
 let goalDisplay;
@@ -59,6 +59,8 @@ async function LiftUD() {
         LiftStatus = false;
     }
 }
+//уголок арбуза показывает поднимиться лифт или опуститься
+
 
 async function GoToOP1() {
     fetch(`${ROBOT_URL}/cmd/nav_name`, {
@@ -87,18 +89,18 @@ async function updateStatus() {
 }
 
 async function updateBatteryAndEmergency() {
-        const response = await fetch(`${ROBOT_URL}/reeman/base_encode`);
-        const data = await response.json();
-        
-        batteryDisplay.textContent = data.battery;
+    const response = await fetch(`${ROBOT_URL}/reeman/base_encode`);
+    const data = await response.json();
 
-        chargeDisplay.textContent = data.chargeFlag  == 2 ? "Да" : "Нет";
+    batteryDisplay.textContent = data.battery;
 
-        emergencyDisplay.textContent = data.emergency == 0 ? "🔴" : "🟢";
+    chargeDisplay.textContent = data.chargeFlag == 2 ? "Да" : "Нет";
+
+    emergencyDisplay.textContent = data.emergency == 0 ? "🔴" : "🟢";
 }
 
 async function updateGoal() {
-    const responce = await fetch (`${ROBOT_URL}/reeman/nav_status`);
+    const responce = await fetch(`${ROBOT_URL}/reeman/nav_status`);
     const data = await responce.json();
 
     goalDisplay.textContent = data.goal;
