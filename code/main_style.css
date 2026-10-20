@@ -20,6 +20,21 @@ button {
     margin-bottom: 20px;
 }
 
+#lift {
+    width: 35px;
+    height: 35px;
+    cursor: pointer;
+    background-image: url('/home/danilo/pss2/reeman-flyboat/reference/pngegg 1.png');
+    background-size: cover;
+    /* Растягивает картинку на всю кнопку */
+    background-position: center;
+    color: white;
+    /* Цвет текста */
+    font-weight: bold;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
 button:hover {
     background: #45a049;
 }
