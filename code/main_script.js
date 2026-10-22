@@ -1,5 +1,5 @@
 const ROBOT_URL = 'http://10.6.20.95';
-const UPDATE_INTERVAL = 2000;
+const UPDATE_INTERVAL = 500;
 
 const dotOP1 = { "point": "ОП1" };
 const dotOP2 = { "point": "ОП2" }
