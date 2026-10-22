@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
     batteryDisplay = document.getElementById('battery');
     chargeDisplay = document.getElementById('chargeFlag');
     goalDisplay = document.getElementById('goal');
-    emergencyDisplay = document.getElementById('emergency');
+    emergencyDisplay = document.getElementById('emergencyButton');
 
     OP1.addEventListener('click', GoToOP1);
     OP2.addEventListener('click', GoToOP2);
@@ -96,7 +96,7 @@ async function updateBatteryAndEmergency() {
 
     chargeDisplay.textContent = data.chargeFlag == 2 ? "Да" : "Нет";
 
-    emergencyDisplay.textContent = data.emergency == 0 ? "🔴" : "🟢";
+    emergencyDisplay.textContent = data.emergencyButton == 1 ? "🟢" : "🔴";
 }
 
 async function updateGoal() {
