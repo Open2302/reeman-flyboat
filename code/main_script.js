@@ -115,7 +115,7 @@ function updateBatteryImage(percent, chargeFlag) {
     let imagePath;
     const battery = Number(percent);
 
-    if (Number(chargeFlag) === 2 && battery < 100) {
+    if (Number(chargeFlag) === 2 && battery <= 100) {
         imagePath = "../reference/battery.gif";
     } else if (battery >= 70) {
         imagePath = "../reference/batteryFULL.png";
