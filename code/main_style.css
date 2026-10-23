@@ -15,6 +15,7 @@ body {
     padding: 0;
     margin: 0;
     flex-grow: 1;         
+    min-height: 0;
     overflow-y: auto;     
     display: flex;
     flex-direction: column;
@@ -46,12 +47,46 @@ body {
 }
 .modal-content {
     background-color: #fff;
+    box-sizing: border-box;
     width: 100%;
     height: 100%;
     padding: 10px;
     border-radius: 0;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     position: relative;
+}
+.route-panel-footer {
+    display: flex;
+    gap: 10px;
+    padding-top: 12px;
+    flex-shrink: 0;
+}
+.route-panel-btn {
+    flex: 1;
+    margin: 0;
+    padding: 10px 12px;
+    font-size: 15px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    color: #fff;
+}
+.route-panel-btn--send {
+    background: #4CAF50;
+}
+.route-panel-btn--clear {
+    background: #9e9e9e;
+}
+.route-panel-btn--send:hover {
+    background: #45a049;
+}
+.route-panel-btn--clear:hover {
+    background: #7d7d7d;
+}
+.route-panel-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    opacity: 1;
 }
 
 .close-btn {

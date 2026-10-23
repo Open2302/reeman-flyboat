@@ -8,7 +8,7 @@ const LiftXddd = document.getElementById("lift")
 
 
 
-let OP1, OP2, OP3, OP4, speedDisplay, Lift;
+let OP1, OP2, OP3, OP4, speedDisplay, Lift, routePanelFooter, sendRouteBtn, clearRouteBtn;
 let batteryDisplay;
 let chargeDisplay;
 let goalDisplay;
@@ -22,6 +22,9 @@ document.addEventListener('DOMContentLoaded', () => {
     modalWindow = document.getElementById("modal")
     pointsList = document.getElementById('points-list');
     routeList = document.getElementById('points-list-route');
+    routePanelFooter = document.getElementById('route-panel-footer');
+    sendRouteBtn = document.getElementById('send-route-btn');
+    clearRouteBtn = document.getElementById('clear-route-btn');
     closeModal = document.querySelector('.close-btn');
     SpeedDisplay = document.getElementById('speed');
     openModal = document.getElementById('Route')
@@ -40,6 +43,8 @@ document.addEventListener('DOMContentLoaded', () => {
     goalDisplay = document.getElementById('goal');
     emergencyDisplay = document.getElementById('emergency');
 
+    sendRouteBtn.addEventListener('click', sendRoute);
+    clearRouteBtn.addEventListener('click', clearRoute);
     OP1.addEventListener('click', GoToOP1);
     OP2.addEventListener('click', GoToOP2);
     Lift.addEventListener('click', LiftUD);
@@ -154,6 +159,7 @@ function addList(event) {
     newLi.appendChild(nameSpan);
     newLi.appendChild(actionsDiv);
     routeList.appendChild(newLi);
+    updateRouteButtonsState();
 }
 
 function handleRouteClick(event) {
@@ -174,6 +180,7 @@ function handleRouteClick(event) {
 
     if (deleteBtn) {
         li.remove();
+        updateRouteButtonsState();
         return;
     }
 
@@ -191,5 +198,39 @@ function handleRouteClick(event) {
         next.after(li);
         }
         return;
+    }
+}
+
+function updateRouteButtonsState() {
+    const hasPoints = routeList.children.length > 0;
+    routePanelFooter.classList.toggle('hidden', !hasPoints);
+}
+
+function clearRoute() {
+    routeList.innerHTML = '';
+    updateRouteButtonsState();
+}
+
+async function sendRoute() {
+    const nameEls = routeList.querySelectorAll('.route-point-name');
+    const points = Array.from(nameEls).map(el => el.textContent.trim());
+
+    if (points.length === 0) {
+        return;
+    }
+
+    sendRouteBtn.disabled = true;
+    clearRouteBtn.disabled = true;
+
+    try {
+        // ⚠️ ФОРМАТ ЗАВИСИТ ОТ БЭКЕНДА — проверь/поправь URL и тело под свой API.
+        await fetch(`${ROBOT_URL}/cmd/nav_route`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ points: points })
+        });
+    } finally {
+        sendRouteBtn.disabled = false;
+        clearRouteBtn.disabled = false;
     }
 }

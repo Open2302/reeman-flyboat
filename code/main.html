@@ -48,7 +48,7 @@
     <div id ="modal" class="modal-overlay hidden">
         <div  class="modal-content">
             <div class="route-builder">
-                <div id ="points-panel class ="panel">
+                <div id ="points-panel" class ="panel">
                     <h3>Точки</h3>
                     <ul id ="points-list" class ="points-list">
                         <li><button class="DotButton">ОП5</button></li>
@@ -69,10 +69,14 @@
                             <li><button class="DotButton">склад</button></li>
                  </ul>
                 </div>
-                <div id ="route-panel class ="panel">
+                <div id ="route-panel" class ="panel">
                 <h3>Маршрут</h3>
                    <ol id="points-list-route" class="points-list route-order">
                    </ol>
+                   <div id="route-panel-footer" class="route-panel-footer hidden">
+                        <button id="send-route-btn" type="button" class="route-panel-btn route-panel-btn--send">Отправить маршрут</button>
+                        <button id="clear-route-btn" type="button" class="route-panel-btn route-panel-btn--clear">Очистить</button>
+                    </div>
                 </div>
             </div>    
             <span class="close-btn">&times;</span>
