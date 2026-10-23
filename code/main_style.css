@@ -68,3 +68,10 @@ button:disabled {
     color: #333;
     font-weight: bold;
 }
+
+.battery-gif {
+    display: block;
+    width: 140px;
+    height: auto;
+    margin-top: 8px;
+}
