@@ -19,7 +19,20 @@ document.addEventListener('DOMContentLoaded', () => {
     OP2 = document.getElementById("OP2")
     OP3 = document.getElementById("OP3")
     OP4 = document.getElementById("OP4")
-
+    modalWindow = document.getElementById("modal")
+    pointsList = document.getElementById('points-list');
+    routeList = document.getElementById('points-list-route');
+    closeModal = document.querySelector('.close-btn');
+    SpeedDisplay = document.getElementById('speed');
+    openModal = document.getElementById('Route')
+    pointsList.addEventListener('click', addList);
+    routeList.addEventListener('click', handleRouteClick); 
+    openModal.addEventListener('click', () => {
+        modalWindow.classList.remove('hidden');
+    });
+    closeModal.addEventListener('click', () => {
+        modalWindow.classList.add('hidden');
+    });
     speedDisplay = document.getElementById('speed');
     Lift = document.getElementById("lift")
     batteryDisplay = document.getElementById('battery');
@@ -30,7 +43,6 @@ document.addEventListener('DOMContentLoaded', () => {
     OP1.addEventListener('click', GoToOP1);
     OP2.addEventListener('click', GoToOP2);
     Lift.addEventListener('click', LiftUD);
-
 
     updateStatus();
     setInterval(updateStatus, UPDATE_INTERVAL);
@@ -104,4 +116,80 @@ async function updateGoal() {
     const data = await responce.json();
 
     goalDisplay.textContent = data.goal;
+}
+
+function addList(event) {
+    if (!pointsList || !routeList) {
+        return;
+    }
+
+    const clickedButton = event.target.closest('button');
+
+    if (!clickedButton || !pointsList.contains(clickedButton)) {
+        return;
+    }
+
+    const pointName = clickedButton.textContent.trim();
+    const newLi = document.createElement('li');
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'route-point-name';
+    nameSpan.textContent = pointName;
+    const actionsDiv = document.createElement('div');
+    actionsDiv.className = 'route-point-actions';
+    const upBtn = document.createElement('button');
+    upBtn.className = 'move-up-btn';
+    upBtn.textContent = '↑';
+    upBtn.title = 'Переместить вверх';
+    const downBtn = document.createElement('button');
+    downBtn.className = 'move-down-btn';
+    downBtn.textContent = '↓';
+    downBtn.title = 'Переместить вниз';
+    const delBtn = document.createElement('button');
+    delBtn.className = 'delete-btn';
+    delBtn.textContent = '×';
+    delBtn.title = 'Удалить из маршрута';
+    actionsDiv.appendChild(upBtn);
+    actionsDiv.appendChild(downBtn);
+    actionsDiv.appendChild(delBtn);
+    newLi.appendChild(nameSpan);
+    newLi.appendChild(actionsDiv);
+    routeList.appendChild(newLi);
+}
+
+function handleRouteClick(event) {
+    const target = event.target;
+
+    const deleteBtn = target.closest('.delete-btn');
+    const upBtn     = target.closest('.move-up-btn');
+    const downBtn   = target.closest('.move-down-btn');
+
+    if (!deleteBtn && !upBtn && !downBtn) {
+        return;
+    }
+
+    const li = target.closest('li');
+    if (!li) {
+        return;
+    }
+
+    if (deleteBtn) {
+        li.remove();
+        return;
+    }
+
+    if (upBtn) {
+        const prev = li.previousElementSibling;
+        if (prev) {
+        prev.before(li);
+        }
+        return;
+    }
+
+    if (downBtn) {
+        const next = li.nextElementSibling;
+        if (next) {
+        next.after(li);
+        }
+        return;
+    }
 }
