@@ -221,16 +221,4 @@ async function sendRoute() {
 
     sendRouteBtn.disabled = true;
     clearRouteBtn.disabled = true;
-
-    try {
-        // ⚠️ ФОРМАТ ЗАВИСИТ ОТ БЭКЕНДА — проверь/поправь URL и тело под свой API.
-        await fetch(`${ROBOT_URL}/cmd/nav_route`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ points: points })
-        });
-    } finally {
-        sendRouteBtn.disabled = false;
-        clearRouteBtn.disabled = false;
-    }
 }
