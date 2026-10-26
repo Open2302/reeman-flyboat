@@ -1,5 +1,5 @@
 const ROBOT_URL = 'http://10.6.20.95';
-const UPDATE_INTERVAL = 2000;
+const UPDATE_INTERVAL = 500;
 
 const dotOP1 = { "point": "ОП1" };
 const dotOP2 = { "point": "ОП2" }
@@ -12,6 +12,7 @@ let OP1, OP2, OP3, OP4, speedDisplay, Lift, routePanelFooter, sendRouteBtn, clea
 let batteryDisplay;
 let chargeDisplay;
 let goalDisplay;
+let distanceDisplay;
 let emergencyDisplay;
 let LiftStatus = false;
 document.addEventListener('DOMContentLoaded', () => {
@@ -38,6 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     speedDisplay = document.getElementById('speed');
     Lift = document.getElementById("lift")
+    distanceDisplay = document.getElementById('distance');
     batteryDisplay = document.getElementById('battery');
     chargeDisplay = document.getElementById('chargeFlag');
     goalDisplay = document.getElementById('goal');
@@ -121,6 +123,8 @@ async function updateGoal() {
     const data = await responce.json();
 
     goalDisplay.textContent = data.goal;
+
+    distanceDisplay.textContent = data.dist;
 }
 
 function addList(event) {
