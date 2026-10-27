@@ -34,6 +34,7 @@
                     <span class="logo__name">ПСС</span>
                 </div>
             </div>
+            <button id="fullscreen-btn" type="button" class="fullscreen-btn">На весь экран</button>
         </header>
 
         <!-- ===== Статус-бар ===== -->
@@ -89,13 +90,53 @@
             <div class="actions">
                 <button class="btn btn--action btn--lift">Вызов лифта</button>
                 <button class="btn btn--action btn--charge">Зарядка</button>
-                <button class="btn btn--action btn--route">Маршрут</button>
+                <button id="Route" type="button" class="btn btn--action btn--route">Маршрут</button>
             </div>
 
         </section>
 
+        <p id="route-message" class="route-message" role="status" aria-live="polite"></p>
     </main>
 
+    <div id ="modal" class="modal-overlay hidden">
+        <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="route-title">
+<header class="route-header"><span class="eyebrow">ПЛАНИРОВАНИЕ</span><h2 id="route-title">Новый маршрут</h2><p>Выберите точки в нужном порядке</p></header>
+            <div class="route-builder">
+                <div id ="points-panel" class="route-editor-panel">
+                    <h3>Добавить остановку</h3>
+                    <ul id ="points-list" class ="points-list">
+                        <li><button class="DotButton">ОП5</button></li>
+                            <li><button class="DotButton">ОП4</button></li>
+                            <li><button class="DotButton">ОП3</button></li>
+                            <li><button class="DotButton">ОП2</button></li>
+                            <li><button class="DotButton">ОП1</button></li>
+                            <li><button class="DotButton">АС</button></li>
+                            <li><button class="DotButton">ВП5</button></li>
+                            <li><button class="DotButton">ВП4_1</button></li>
+                            <li><button class="DotButton">ВП4_2</button></li>
+                            <li><button class="DotButton">ВП3</button></li>
+                            <li><button class="DotButton">ВП2</button></li>
+                            <li><button class="DotButton">ВП1</button></li>
+                            <li><button class="DotButton">ВП2.1,3.1</button></li>
+                            <li><button class="DotButton">Зарядка</button></li>
+                            <li><button class="DotButton">ворота</button></li>
+                            <li><button class="DotButton">склад</button></li>
+                 </ul>
+                </div>
+                <div id ="route-panel" class="route-editor-panel">
+                <h3>Ваш маршрут <span id="route-count" class="route-count">0</span></h3><p id="route-empty" class="route-empty">Маршрут пока пуст.<br>Добавьте первую остановку из списка точек.</p>
+                   <ol id="points-list-route" class="points-list route-order">
+                   </ol>
+                   <p class="route-hint">После последней остановки робот вернётся на зарядку.</p><div id="route-panel-footer" class="route-panel-footer hidden">
+                        <button id="send-route-btn" type="button" class="route-panel-btn route-panel-btn--send">Подтвердить маршрут →</button>
+                        <button id="clear-route-btn" type="button" class="route-panel-btn route-panel-btn--clear">Очистить</button>
+                    </div>
+                </div>
+            </div>
+            <button type="button" class="close-btn" aria-label="Закрыть маршрут">&times;</button>
+        </div>
+    </div>
+    <script src="../main_script.js"></script>
 </body>
 
 </html>

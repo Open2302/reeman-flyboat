@@ -9,12 +9,23 @@ const LiftXddd = document.getElementById("lift")
 
 
 let OP1, OP2, OP3, OP4, speedDisplay, Lift, routePanelFooter, sendRouteBtn, clearRouteBtn;
+let modalWindow, pointsList, routeList, closeModal, openModal;
 let batteryDisplay;
 let chargeDisplay;
 let goalDisplay;
 let distanceDisplay;
 let emergencyDisplay;
 let LiftStatus = false;
+let routeRunning = false;
+function setRouteMessage(message) {
+    const display = document.getElementById('route-message');
+    if (display) display.textContent = message;
+}
+function hideRouteModal() {
+    modalWindow.classList.add('hidden');
+    document.body.classList.remove('modal-open');
+    openModal.focus();
+}
 document.addEventListener('DOMContentLoaded', () => {
     OP1 = document.getElementById("OP1")
     OP2 = document.getElementById("OP2")
@@ -27,15 +38,47 @@ document.addEventListener('DOMContentLoaded', () => {
     sendRouteBtn = document.getElementById('send-route-btn');
     clearRouteBtn = document.getElementById('clear-route-btn');
     closeModal = document.querySelector('.close-btn');
-    SpeedDisplay = document.getElementById('speed');
+
     openModal = document.getElementById('Route')
     pointsList.addEventListener('click', addList);
     routeList.addEventListener('click', handleRouteClick); 
     openModal.addEventListener('click', () => {
         modalWindow.classList.remove('hidden');
+        document.body.classList.add('modal-open');
+        closeModal.focus();
     });
-    closeModal.addEventListener('click', () => {
-        modalWindow.classList.add('hidden');
+    closeModal.addEventListener('click', hideRouteModal);
+    modalWindow.addEventListener('click', (event) => {
+        if (event.target === modalWindow) hideRouteModal();
+    });
+    document.addEventListener('keydown', (event) => {
+        if (modalWindow.classList.contains('hidden')) return;
+        if (event.key === 'Escape') hideRouteModal();
+        if (event.key === 'Tab') {
+            const buttons = [...modalWindow.querySelectorAll('button:not(:disabled)')]
+                .filter(button => button.getClientRects().length);
+            const first = buttons[0], last = buttons[buttons.length - 1];
+            if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault(); last.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault(); first.focus();
+            }
+        }
+    });
+    const fullscreenButton = document.getElementById('fullscreen-btn');
+    const enterFullscreen = () => {
+        if (document.fullscreenEnabled && !document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(() => {});
+        }
+    };
+    document.addEventListener('click', enterFullscreen, { once: true });
+    fullscreenButton?.addEventListener('click', () => {
+        if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+        else enterFullscreen();
+    });
+    document.addEventListener('fullscreenchange', () => {
+        if (fullscreenButton) fullscreenButton.textContent = document.fullscreenElement
+            ? 'Выйти из полного экрана' : 'На весь экран';
     });
     speedDisplay = document.getElementById('speed');
     Lift = document.getElementById("lift")
@@ -47,16 +90,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     sendRouteBtn.addEventListener('click', sendRoute);
     clearRouteBtn.addEventListener('click', clearRoute);
-    OP1.addEventListener('click', GoToOP1);
-    OP2.addEventListener('click', GoToOP2);
-    Lift.addEventListener('click', LiftUD);
+    OP1?.addEventListener('click', GoToOP1);
+    OP2?.addEventListener('click', GoToOP2);
+    Lift?.addEventListener('click', LiftUD);
 
-    updateStatus();
-    setInterval(updateStatus, UPDATE_INTERVAL);
-    updateBatteryAndEmergency();
-    setInterval(updateBatteryAndEmergency, UPDATE_INTERVAL);
-    updateGoal();
-    setInterval(updateGoal, UPDATE_INTERVAL);
+    updateRouteButtonsState();
+    const poll = (update) => {
+        update().catch(console.error);
+        setInterval(() => update().catch(console.error), UPDATE_INTERVAL);
+    };
+    if (speedDisplay) poll(updateStatus);
+    if (batteryDisplay && chargeDisplay && emergencyDisplay) poll(updateBatteryAndEmergency);
+    if (goalDisplay && distanceDisplay) poll(updateGoal);
 });
 
 async function LiftUD() {
@@ -206,6 +251,11 @@ function handleRouteClick(event) {
 function updateRouteButtonsState() {
     const hasPoints = routeList.children.length > 0;
     routePanelFooter.classList.toggle('hidden', !hasPoints);
+    const empty = document.getElementById('route-empty');
+    if (empty) empty.classList.toggle('hidden', hasPoints);
+    const count = document.getElementById('route-count');
+    if (count) count.textContent = routeList.children.length;
+    sendRouteBtn.disabled = routeRunning;
 }
 
 function clearRoute() {
@@ -214,19 +264,31 @@ function clearRoute() {
 }
 
 async function sendRoute() {
+    if (routeRunning) return;
     const points = [...routeList.querySelectorAll('.route-point-name')]
         .map(el => el.textContent.trim());
 
     if (points.length === 0) return;
     if (points[points.length - 1] !== 'Зарядка') points.push('Зарядка');
-
+    routeRunning = true;
+    updateRouteButtonsState();
+    hideRouteModal();
+    try {
     for (let i = 0; i < points.length; i++) {
+        setRouteMessage(`Маршрут выполняется · ${i + 1}/${points.length} · ${points[i]}`);
         await goToRoutePoint(points[i]);
         await waitForArrival(points[i]);
 
         if (i < points.length - 1) {
             await new Promise(resolve => setTimeout(resolve, 1000));   
         }
+    }
+    setRouteMessage('Маршрут завершён');
+    } catch (error) {
+        setRouteMessage('Не удалось выполнить маршрут. Проверьте соединение с роботом.');
+    } finally {
+        routeRunning = false;
+        updateRouteButtonsState();
     }
 }
 
@@ -244,6 +306,7 @@ async function waitForArrival(point) {
 
     while (true) {
         const response = await fetch(`${ROBOT_URL}/reeman/nav_status`);
+        if (!response.ok) throw new Error(`Ошибка статуса маршрута: ${response.status}`);
         const data = await response.json();
 
         if (data.goal === point && Number(data.dist) > 0.2) wasFar = true;
