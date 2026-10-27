@@ -94,17 +94,6 @@ async function updateBatteryAndEmergency() {
 
     batteryDisplay.textContent = data.battery;
     updateBatteryImage(data.battery, data.chargeFlag);
-
-    chargeDisplay.textContent = data.chargeFlag == 2 ? "Да" : "Нет";
-
-    emergencyDisplay.textContent = data.emergency == 0 ? "🔴" : "🟢";
-}
-
-async function updateGoal() {
-    const responce = await fetch(`${ROBOT_URL}/reeman/nav_status`);
-    const data = await responce.json();
-
-    goalDisplay.textContent = data.goal;
 }
 
 function updateBatteryImage(percent, chargeFlag) {
@@ -128,4 +117,11 @@ function updateBatteryImage(percent, chargeFlag) {
     if (batteryImage.getAttribute("src") !== imagePath) {
         batteryImage.setAttribute("src", imagePath);
     }
+}
+
+async function updateGoal() {
+    const responce = await fetch(`${ROBOT_URL}/reeman/nav_status`);
+    const data = await responce.json();
+
+    goalDisplay.textContent = data.goal;
 }
