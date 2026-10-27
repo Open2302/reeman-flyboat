@@ -169,6 +169,11 @@ button:disabled {
     font-weight: bold;
 }
 
+.battery-gif {
+    display: block;
+    width: 50px;
+    height: auto;
+    margin-top: 1px;
 #points-list-route {
     list-style-type: decimal;
     padding-left: 24px;
