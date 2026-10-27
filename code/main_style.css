@@ -71,7 +71,7 @@ button:disabled {
 
 .battery-gif {
     display: block;
-    width: 50px;
+    width: 140px;
     height: auto;
-    margin-top: 1px;
+    margin-top: 8px;
 }
