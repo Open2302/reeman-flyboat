@@ -23,6 +23,7 @@
                     <span class="logo__name">ПСС</span>
                 </div>
             </div>
+            <button id="fullscreen-btn" type="button" class="fullscreen-btn">На весь экран</button>
         </header>
 
         <!-- ===== Статус-бар ===== -->
@@ -73,13 +74,14 @@
 
             <!-- Нижние кнопки действий -->
             <div class="actions">
-                <button id="lift" class="btn btn--action btn--lift">Вызов лифта</button>
+                <button id="lift" class="btn btn--action btn--lift"></button>
                 <button id="charger" class="btn btn--action btn--charge">Зарядка</button>
                 <button id="route" class="btn btn--action btn--route">Маршрут</button>
             </div>
 
         </section>
 
+        <p id="route-message" class="route-message" role="status" aria-live="polite"></p>
     </main>
 
     <script src="joj.js"></script>

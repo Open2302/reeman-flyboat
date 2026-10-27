@@ -139,6 +139,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     Lift.addEventListener('click', LiftUD);
+    Lift.addEventListener('click', LiftUD);
+    Lift.textContent = "Поднять лифт";
+
+    
     updateStatus();
     setInterval(updateStatus, UPDATE_INTERVAL);
     updateBatteryAndEmergency();
@@ -154,7 +158,7 @@ async function LiftUD() {
             headers: { 'Content-Type': 'application/json' },
             body: "0"
         });
-        LiftXddd.style.transform = 'rotate(-180deg)'
+        Lift.textContent = "Опустить лифт";
         LiftStatus = true;
     } else {
         fetch(`${ROBOT_URL}/cmd/hydraulic_down`, {
@@ -162,7 +166,7 @@ async function LiftUD() {
             headers: { 'Content-Type': 'application/json' },
             body: "0"
         });
-        LiftXddd.style.transform = 'rotate(360deg)'
+        Lift.textContent = "Поднять лифт";
         LiftStatus = false;
     }
 }
@@ -283,6 +287,30 @@ async function updateBatteryAndEmergency() {
 
     } catch (error) {
         console.error("Ошибка получения состояния робота:", error);
+    batteryDisplay.textContent = data.battery;
+    updateBatteryImage(data.battery, data.chargeFlag);
+}
+
+function updateBatteryImage(percent, chargeFlag) {
+    const batteryImage = document.getElementById("batteryAnimation");
+
+    if (!batteryImage) return;
+
+    let imagePath;
+    const battery = Number(percent);
+
+    if (Number(chargeFlag) === 2 && battery <= 100) {
+        imagePath = "../reference/battery.gif";
+    } else if (battery >= 70) {
+        imagePath = "../reference/batteryFULL.png";
+    } else if (battery >= 20) {
+        imagePath = "../reference/batteryMEDIUM.png";
+    } else {
+        imagePath = "../reference/batteryLOW.png";
+    }
+
+    if (batteryImage.getAttribute("src") !== imagePath) {
+        batteryImage.setAttribute("src", imagePath);
     }
 }
 
