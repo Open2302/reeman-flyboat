@@ -78,8 +78,6 @@ async function LiftUD() {
         LiftStatus = false;
     }
 }
-//уголок арбуза показывает поднимиться лифт или опуститься
-
 
 async function GoToOP1() {
     fetch(`${ROBOT_URL}/cmd/nav_name`, {
@@ -216,13 +214,46 @@ function clearRoute() {
 }
 
 async function sendRoute() {
-    const nameEls = routeList.querySelectorAll('.route-point-name');
-    const points = Array.from(nameEls).map(el => el.textContent.trim());
+    const points = [...routeList.querySelectorAll('.route-point-name')]
+        .map(el => el.textContent.trim());
 
-    if (points.length === 0) {
-        return;
+    if (points.length === 0) return;
+    if (points[points.length - 1] !== 'Зарядка') points.push('Зарядка');
+
+    for (let i = 0; i < points.length; i++) {
+        await goToRoutePoint(points[i]);
+        await waitForArrival(points[i]);
+
+        if (i < points.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 1000));   
+        }
     }
+}
 
-    sendRouteBtn.disabled = true;
-    clearRouteBtn.disabled = true;
+async function goToRoutePoint(point) {
+    const response = await fetch(`${ROBOT_URL}/cmd/nav_name`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ point })
+    });
+}
+
+async function waitForArrival(point) {
+    let wasFar = false;
+    let nearCount = 0;
+
+    while (true) {
+        const response = await fetch(`${ROBOT_URL}/reeman/nav_status`);
+        const data = await response.json();
+
+        if (data.goal === point && Number(data.dist) > 0.2) wasFar = true;
+        if (wasFar && data.goal === point && Number(data.dist) <= 1) {
+            nearCount++;
+            if (nearCount >= 3) return;
+        } else {
+            nearCount = 0;
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 2000));
+    }
 }
