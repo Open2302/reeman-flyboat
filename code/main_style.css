@@ -171,8 +171,9 @@ button:disabled {
 
 .battery-gif {
     display: block;
-    width: 50px;
+    width: 140px;
     height: auto;
+    margin-top: 8px;
     margin-top: 1px;
 #points-list-route {
     list-style-type: decimal;

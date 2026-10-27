@@ -1,5 +1,19 @@
 const ROBOT_URL = 'http://10.6.20.95';
 const UPDATE_INTERVAL = 500;
+const REQUIRED_CHECKS = 3;
+const SPEED_THRESHOLD = 0.001;
+
+let currentMotionState = null;
+let candidateMotionState = null;
+let motionCheckCount = 0;
+
+function updateSelectedPoint(point) {
+    const statusPoint = document.getElementById("StatusPoint");
+
+    if (statusPoint) {
+        statusPoint.textContent = `Точка: ${point}`;
+    }
+}
 
 const PointDoor = { "point": "ворота" };
 const PointOP5 = { "point": "ОП5" };
@@ -56,22 +70,75 @@ document.addEventListener('DOMContentLoaded', () => {
     goalDisplay = document.getElementById('goal');
     emergencyDisplay = document.getElementById('emergency');
 
-    OP1.addEventListener('click', () => GoToPoint(PointOP1));
-    OP2.addEventListener('click', () => GoToPoint(PointOP2));
-    OP3.addEventListener('click', () => GoToPoint(PointOP3));
-    OP4.addEventListener('click', () => GoToPoint(PointOP4));
-    OP5.addEventListener('click', () => GoToPoint(PointOP5));
 
-    VP1.addEventListener('click', () => GoToPoint(PointVP1));
-    VP2.addEventListener('click', () => GoToPoint(PointVP2));
-    VP3.addEventListener('click', () => GoToPoint(PointVP3));
-    VP4.addEventListener('click', () => GoToPoint(PointVP4));
-    VP5.addEventListener('click', () => GoToPoint(PointVP5));
+    OP1.addEventListener('click', () => {
+        GoToPoint(PointOP1);
+        updateSelectedPoint("ОП1");
+    });
 
-    VP21_31.addEventListener('click', () => GoToPoint(PointVP21_31));
-    Charger.addEventListener('click', () => GoToPoint(PointCharger));
-    AS.addEventListener('click', () => GoToPoint(PointAS));
+    OP2.addEventListener('click', () => {
+        GoToPoint(PointOP2);
+        updateSelectedPoint("ОП2");
+    });
 
+    OP3.addEventListener('click', () => {
+        GoToPoint(PointOP3);
+        updateSelectedPoint("ОП3");
+    });
+
+    OP4.addEventListener('click', () => {
+        GoToPoint(PointOP4);
+        updateSelectedPoint("ОП4");
+    });
+
+    OP5.addEventListener('click', () => {
+        GoToPoint(PointOP5);
+        updateSelectedPoint("ОП5");
+    });
+
+    VP1.addEventListener('click', () => {
+        GoToPoint(PointVP1);
+        updateSelectedPoint("ВП1");
+    });
+
+    VP2.addEventListener('click', () => {
+        GoToPoint(PointVP2);
+        updateSelectedPoint("ВП2");
+    });
+
+    VP3.addEventListener('click', () => {
+        GoToPoint(PointVP3);
+        updateSelectedPoint("ВП3");
+    });
+
+    VP4.addEventListener('click', () => {
+        GoToPoint(PointVP4);
+        updateSelectedPoint("ВП4");
+    });
+
+    VP5.addEventListener('click', () => {
+        GoToPoint(PointVP5);
+        updateSelectedPoint("ВП5");
+    });
+
+    VP21_31.addEventListener('click', () => {
+        GoToPoint(PointVP21_31);
+        updateSelectedPoint("ВП2.1-3.1");
+    });
+
+    Charger.addEventListener('click', () => {
+        GoToPoint(PointCharger);
+        updateSelectedPoint("Зарядка");
+    });
+
+    AS.addEventListener('click', () => {
+        GoToPoint(PointAS);
+        updateSelectedPoint("АС");
+    });
+
+
+
+    Lift.addEventListener('click', LiftUD);
     Lift.addEventListener('click', LiftUD);
     Lift.textContent = "Поднять лифт";
 
@@ -104,20 +171,122 @@ async function LiftUD() {
     }
 }
 
+
+
+
 async function updateStatus() {
-    const response = await fetch(`${ROBOT_URL}/reeman/speed`);
-    const data = await response.json();
-    const speed = data.vx;
+    try {
+        const response = await fetch(`${ROBOT_URL}/reeman/speed`);
+        const data = await response.json();
 
-    let SpeedTest = speed == 0 ? "Стоянка" : "Движенение";
+        const speed = Number(data.vx);
+        if (!Number.isFinite(speed)) return;
 
-    speedDisplay.textContent = SpeedTest;
+        // Проверка, стоит ли робот
+        const isStopped = Math.abs(speed) <= SPEED_THRESHOLD;
+
+        if (currentMotionState === null) {
+            candidateMotionState = isStopped;
+            motionCheckCount++;
+
+            if (motionCheckCount >= REQUIRED_CHECKS) {
+                currentMotionState = isStopped;
+                motionCheckCount = 0;
+            }
+        } else if (isStopped === currentMotionState) {
+            candidateMotionState = isStopped;
+            motionCheckCount = 0;
+        } else {
+            if (isStopped === candidateMotionState) {
+                motionCheckCount++;
+            } else {
+                candidateMotionState = isStopped;
+                motionCheckCount = 1;
+            }
+
+            if (motionCheckCount >= REQUIRED_CHECKS) {
+                currentMotionState = candidateMotionState;
+                motionCheckCount = 0;
+            }
+        }
+
+        const speedDisplay = document.getElementById("speed");
+        const dot = document.querySelector("#StatusMov .statusbar__dot");
+        const mapIcon = document.getElementById("mapIcon");
+
+        if (currentMotionState === null) return;
+
+        if (speedDisplay) {
+            speedDisplay.textContent = currentMotionState ?
+                "Стоит" :
+                "Движется";
+        }
+
+        if (dot) {
+            dot.style.background = currentMotionState ?
+                "radial-gradient(circle at 35% 30%, #ff9999, #e60000 55%, #990000)" :
+                "radial-gradient(circle at 35% 30%, #8cf08c, #17c517 55%, #0a9e0a)";
+
+            dot.style.borderColor = currentMotionState ? "#8b0000" : "#0b8b0b";
+        }
+
+        if (mapIcon) {
+            const imageName = currentMotionState ? "map.png" : "mapActive.gif";
+
+            if (!mapIcon.src.endsWith(imageName)) {
+                mapIcon.src = `../../reference/${imageName}`;
+            }
+        }
+
+    } catch (error) {
+        console.error("Ошибка получения скорости робота:", error);
+    }
 }
 
-async function updateBatteryAndEmergency() {
-    const response = await fetch(`${ROBOT_URL}/reeman/base_encode`);
-    const data = await response.json();
 
+
+
+async function updateBatteryAndEmergency() {
+    try {
+        const response = await fetch(`${ROBOT_URL}/reeman/base_encode`);
+        const data = await response.json();
+
+        // Батарейка в статус-баре
+        const batteryIcon = document.getElementById("StatusBattery");
+        const battery = Number(data.battery);
+        const isCharging = Number(data.chargeFlag) === 2;
+
+        if (batteryIcon) {
+            let imagePath;
+
+            if (isCharging) {
+                imagePath = "../../reference/battery.gif";
+            } else if (battery >= 80) {
+                imagePath = "../../reference/batteryFULL.png";
+            } else if (battery >= 30) {
+                imagePath = "../../reference/batteryMEDIUM.png";
+            } else {
+                imagePath = "../../reference/batteryLOW.png";
+            }
+
+            if (!batteryIcon.src.endsWith(imagePath.split("/").pop())) {
+                batteryIcon.src = imagePath;
+            }
+
+            batteryIcon.title = `Заряд батареи: ${data.battery}%`;
+        }
+
+        // Аварийка — используем существующую иконку
+        const emergencyIcon = document.getElementById("emergencyIcon");
+
+        if (emergencyIcon) {
+            emergencyIcon.src = Number(data.emergency) === 0 ?
+                "../../reference/emergency_red.png" :
+                "../../reference/emergency_gray.png";
+        }
+
+    } catch (error) {
+        console.error("Ошибка получения состояния робота:", error);
     batteryDisplay.textContent = data.battery;
     updateBatteryImage(data.battery, data.chargeFlag);
 }
@@ -145,12 +314,38 @@ function updateBatteryImage(percent, chargeFlag) {
     }
 }
 
-async function updateGoal() {
-    const responce = await fetch(`${ROBOT_URL}/reeman/nav_status`);
-    const data = await responce.json();
 
-    goalDisplay.textContent = data.goal;
+
+
+async function updateGoal() {
+    try {
+        const response = await fetch(`${ROBOT_URL}/reeman/nav_status`);
+        const data = await response.json();
+        const goal = data.goal;
+
+        if (goal === undefined || goal === null || goal === "") {
+            return;
+        }
+
+        const statusPoint = document.getElementById("StatusPoint");
+
+        if (statusPoint) {
+            const pointNames = {
+                "ВП4_2": "ВП4",
+                "ВП2.1,3.1": "ВП2.1-3.1",
+                "ворота": "Ворота",
+                "склад": "Склад"
+            };
+
+            const displayGoal = pointNames[String(goal)] || String(goal);
+            statusPoint.textContent = `Точка: ${displayGoal}`;
+        }
+
+    } catch (error) {
+        console.error("Ошибка получения цели робота:", error);
+    }
 }
+
 
 async function GoToPoint(point) {
     fetch(`${ROBOT_URL}/cmd/nav_name`, {
