@@ -13,11 +13,22 @@
     <main class="panel">
 
         <!-- ===== Шапка с логотипом ===== -->
-
         <header class="panel__header">
             <div class="logo">
-                <img class="logo__icon" src="../../reference/pss1.png" alt="Логотип корпорации ПСС">
-
+                <svg class="logo__icon" viewBox="0 0 72 62" aria-hidden="true">
+          <defs>
+            <clipPath id="pyramid">
+              <polygon points="36,0 72,62 0,62"/>
+            </clipPath>
+          </defs>
+          <polygon points="36,0 72,62 0,62" fill="#e0324c"/>
+          <g clip-path="url(#pyramid)" stroke="#ffffff" stroke-width="5" fill="none">
+            <line x1="0"  y1="20" x2="72" y2="20"/>
+            <line x1="0"  y1="36" x2="72" y2="36"/>
+            <line x1="0"  y1="50" x2="72" y2="50"/>
+            <line x1="44" y1="64" x2="74" y2="28"/>
+          </g>
+        </svg>
                 <div class="logo__text">
                     <span class="logo__caption">® КОРПОРАЦИЯ</span>
                     <span class="logo__name">ПСС</span>
@@ -30,19 +41,22 @@
         <section class="statusbar">
 
             <!-- батарейка -->
-            <img id="StatusBattery" class="battery" src="../../reference/batteryLOW.png" alt="Заряд батареи" title="Заряд батареи" />
+            <div id="StatusBattery" class="battery" title="Заряд батареи"></div>
 
             <!-- точка -->
             <div id="StatusPoint" class="statusbar__item">Точка:&nbsp; ОП1</div>
 
             <!-- движение + индикатор -->
             <div id="StatusMov" class="statusbar__item statusbar__motion">
-                <span id="speed">Стоит</span>
+                Движение
                 <span class="statusbar__dot"></span>
             </div>
 
-            <!-- Карта -->
-            <img id="mapIcon" class="statusbar__icon" src="../../reference/map.png" alt="Карта" />
+            <!-- метка карты -->
+            <svg class="statusbar__icon" viewBox="0 0 24 32" aria-hidden="true">
+        <path d="M12 0C5.4 0 0 5.3 0 11.9 0 20.9 12 32 12 32s12-11.1 12-20.1C24 5.3 18.6 0 12 0z" fill="#ffffff"/>
+        <circle cx="12" cy="12" r="4.6" fill="#d8d8d8"/>
+      </svg>
 
             <!-- предупреждение -->
             <svg class="statusbar__icon statusbar__icon--warn" viewBox="0 0 34 30" aria-hidden="true">
