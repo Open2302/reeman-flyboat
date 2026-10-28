@@ -477,3 +477,16 @@ button:focus-visible { outline: 3px solid #e6aa32; outline-offset: 3px; }
 @media (max-height: 620px) and (max-width: 620px) {
     .points { grid-template-rows: repeat(4, minmax(32px, 1fr)); }
 }
+.connection-status {
+    flex-shrink: 0;
+    padding: 8px 16px;
+    background: #fff0cc;
+    color: #694700;
+    text-align: center;
+    font-size: 16px;
+}
+.btn:disabled, .route-editor button:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+    transform: none;
+}
