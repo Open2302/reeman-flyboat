@@ -1,5 +1,13 @@
 const ROBOT_URL = 'http://10.6.20.95';
 const UPDATE_INTERVAL = 500;
+const SPEED_THRESHOLD = 0.001;
+const MOTION_CONFIRMATIONS = 3;
+let navigationDistance = null;
+let navigationUpdatedAt = 0;
+let confirmedStopped = null;
+let candidateStopped = null;
+let motionConfirmations = 0;
+let motionUpdatePending = false;
 
 function updateSelectedPoint(point) {
     const statusPoint = document.getElementById("StatusPoint");
@@ -138,19 +146,19 @@ document.addEventListener('DOMContentLoaded', () => {
     sendRouteBtn = document.getElementById('send-route-btn');
     clearRouteBtn = document.getElementById('clear-route-btn');
     closeModal = document.querySelector('.close-btn');
-    openModal = document.getElementById('Route')
+    openModal = BTNRoute;
     
-    pointsList.addEventListener('click', addList);
-    routeList.addEventListener('click', handleRouteClick); 
-    openModal.addEventListener('click', () => {
-        modalWindow.classList.remove('hidden');
+    pointsList?.addEventListener('click', addList);
+    routeList?.addEventListener('click', handleRouteClick); 
+    openModal?.addEventListener('click', () => {
+        modalWindow?.classList.remove('hidden');
     });
-    closeModal.addEventListener('click', () => {
-        modalWindow.classList.add('hidden');
+    closeModal?.addEventListener('click', () => {
+        modalWindow?.classList.add('hidden');
     });
     
-    sendRouteBtn.addEventListener('click', sendRoute);
-    clearRouteBtn.addEventListener('click', clearRoute);
+    sendRouteBtn?.addEventListener('click', sendRoute);
+    clearRouteBtn?.addEventListener('click', clearRoute);
 
     Lift.addEventListener('click', LiftUD);
     updateStatus();
@@ -182,26 +190,55 @@ async function LiftUD() {
 }
 
 async function updateStatus() {
+    if (motionUpdatePending) return;
+    motionUpdatePending = true;
+    try {
     const response = await fetch(`${ROBOT_URL}/reeman/speed`);
+    if (!response.ok) throw new Error(`Speed HTTP ${response.status}`);
     const data = await response.json();
 
     const speed = Number(data.vx);
+    if (data.vx === null || data.vx === undefined || !Number.isFinite(speed)) return;
+
+    // Далеко от цели сохраняем движение даже при кратком падении скорости.
+    const hasDistance = navigationDistance !== null &&
+        Date.now() - navigationUpdatedAt < UPDATE_INTERVAL * 6;
+    const isStopped = !(hasDistance && navigationDistance >= 1) &&
+        Math.abs(speed) <= SPEED_THRESHOLD;
+
+    if (candidateStopped === isStopped) {
+        motionConfirmations++;
+    } else {
+        candidateStopped = isStopped;
+        motionConfirmations = 1;
+    }
+    if (motionConfirmations >= MOTION_CONFIRMATIONS) {
+        confirmedStopped = isStopped;
+    }
+    if (confirmedStopped === null) return;
 
     const speedDisplay = document.getElementById("speed");
     const dot = document.querySelector("#StatusMov .statusbar__dot");
 
     if (speedDisplay) {
-        speedDisplay.textContent = currentMotionState ?
+        speedDisplay.textContent = confirmedStopped ?
             "Стоит" :
             "Движется";
     }
 
     if (dot) {
-        dot.style.background = currentMotionState ?
+        dot.style.background = confirmedStopped ?
             "radial-gradient(circle at 35% 30%, #ff9999, #e60000 55%, #990000)" :
             "radial-gradient(circle at 35% 30%, #8cf08c, #17c517 55%, #0a9e0a)";
 
-        dot.style.borderColor = currentMotionState ? "#8b0000" : "#0b8b0b";
+        dot.style.borderColor = confirmedStopped ? "#8b0000" : "#0b8b0b";
+    }
+    } catch (error) {
+        candidateStopped = null;
+        motionConfirmations = 0;
+        console.error("Ошибка получения скорости робота:", error);
+    } finally {
+        motionUpdatePending = false;
     }
 }
 
@@ -233,13 +270,19 @@ async function updateBatteryAndEmergency() {
         batteryIcon.title = `Заряд батареи: ${data.battery}%`;
     }
 
-    // Аварийка — используем существующую иконку
+    // Аварийная кнопка: 0 — нажата, 1 — отпущена.
     const emergencyIcon = document.getElementById("emergencyIcon");
 
     if (emergencyIcon) {
-        emergencyIcon.src = Number(data.emergencyButton) === 0 ?
-            "../../reference/emergency_red.png" :
-            "../../reference/emergency_gray.png";
+        const emergencyState = String(data.emergencyButton);
+        const isEmergency = emergencyState === "0";
+        const label = isEmergency ? "Аварийная кнопка нажата" :
+            emergencyState === "1" ? "Аварийная кнопка отпущена" :
+            "Состояние аварийной кнопки неизвестно";
+
+        emergencyIcon.style.color = isEmergency ? "#e60000" : "#8b8b8b";
+        emergencyIcon.setAttribute("aria-label", label);
+        emergencyIcon.querySelector("title").textContent = label;
     }
     
 }
@@ -249,7 +292,11 @@ async function updateGoal() {
     const data = await response.json();
     const goal = data.goal;
 
-    distanceDisplay.textContent = data.dist;
+    const distance = Number(data.dist);
+    navigationDistance = data.dist !== null && data.dist !== undefined &&
+        String(data.dist).trim() !== "" && Number.isFinite(distance) && distance >= 0 ? distance : null;
+    navigationUpdatedAt = Date.now();
+    if (distanceDisplay) distanceDisplay.textContent = data.dist;
 
     if (goal === undefined || goal === null || goal === "") {
         return;
