@@ -49,6 +49,9 @@ let BTNRoute;
 let modalWindow, pointsList, routeList, routePanelFooter;
 let sendRouteBtn, clearRouteBtn, closeModal, openModal;
 let routeRunning = false;
+let routeCancelling = false;
+let activeRoute = null;
+let routeCommand = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     OP1 = document.getElementById("op1")
@@ -185,6 +188,8 @@ document.addEventListener('DOMContentLoaded', () => {
     
     sendRouteBtn?.addEventListener('click', sendRoute);
     clearRouteBtn?.addEventListener('click', clearRoute);
+    document.getElementById('cancel-route-btn').addEventListener('click', cancelRoute);
+    updateRouteButtonsState();
 
     Lift.addEventListener('click', LiftUD);
     updateStatus();
@@ -431,10 +436,15 @@ async function handleRouteClick(event) {
 
 async function updateRouteButtonsState() {
     const hasPoints = routeList.children.length > 0;
-    routePanelFooter.classList.toggle('hidden', !hasPoints);
     document.getElementById('route-empty').classList.toggle('hidden', hasPoints);
     document.getElementById('route-count').textContent = routeList.children.length;
-    sendRouteBtn.disabled = routeRunning;
+    sendRouteBtn.disabled = !hasPoints || routeRunning || routeCancelling;
+    const cancelButton = document.getElementById('cancel-route-btn');
+    cancelButton.disabled = !routeRunning || routeCancelling;
+    const mapIcon = document.getElementById('mapIcon');
+    const mapImage = routeRunning ? 'mapActive.gif' : 'map.png';
+    if (!mapIcon.src.endsWith(mapImage)) mapIcon.src = `../../reference/${mapImage}`;
+    mapIcon.title = routeRunning ? 'Маршрут выполняется' : 'Нет активного маршрута';
 }
 
 async function clearRoute() {
@@ -443,7 +453,7 @@ async function clearRoute() {
 }
 
 async function sendRoute() {
-    if (routeRunning) return;
+    if (routeRunning || routeCancelling) return;
     const points = [...routeList.querySelectorAll('.route-point-name')]
         .map(el => el.textContent.trim());
 
@@ -451,28 +461,81 @@ async function sendRoute() {
     if (points[points.length - 1] !== 'Зарядка') points.push('Зарядка');
 
     const robotPointNames = { 'ВП4': PointVP4.point, 'ВП2.1-3.1': PointVP21_31.point };
+    const controller = new AbortController();
+    activeRoute = controller;
     routeRunning = true;
     updateRouteButtonsState();
     const message = document.getElementById('route-message');
     try {
-    for (let i = 0; i < points.length; i++) {
-        const point = robotPointNames[points[i]] || points[i];
-        message.textContent = `Маршрут выполняется: ${points[i]}`;
-        await goToRoutePoint(point);
-        await waitForArrival(point);
+        for (let i = 0; i < points.length; i++) {
+            controller.signal.throwIfAborted();
+            const point = robotPointNames[points[i]] || points[i];
+            message.textContent = `Маршрут выполняется: ${points[i]} (${i + 1}/${points.length})`;
+            // Уже отправленную команду дожидаемся перед командой возврата на зарядку.
+            routeCommand = goToRoutePoint(point);
+            await routeCommand;
+            controller.signal.throwIfAborted();
+            await waitForArrival(point, controller.signal);
 
-        if (i < points.length - 1) {
-            await new Promise(resolve => setTimeout(resolve, 1000));   
+            if (i < points.length - 1) {
+                await routeDelay(1000, controller.signal);
+            }
+        }
+        controller.signal.throwIfAborted();
+        message.textContent = 'Маршрут завершён';
+    } catch (error) {
+        if (!controller.signal.aborted) {
+            message.textContent = 'Ошибка выполнения маршрута. Проверьте связь с роботом.';
+            console.error('Ошибка выполнения маршрута:', error);
+        }
+    } finally {
+        if (activeRoute === controller) {
+            activeRoute = null;
+            routeRunning = false;
+            routeCommand = null;
+            updateRouteButtonsState();
         }
     }
-    message.textContent = 'Маршрут завершён';
+}
+
+async function cancelRoute() {
+    if (!routeRunning || routeCancelling) return;
+    const controller = activeRoute;
+    activeRoute = null;
+    routeRunning = false;
+    routeCancelling = true;
+    controller.abort();
+    updateRouteButtonsState();
+    const message = document.getElementById('route-message');
+    message.textContent = 'Маршрут отменён. Отправка на зарядку…';
+    try {
+        // Не позволяем старой команде маршрута прийти после команды зарядки.
+        if (routeCommand) await routeCommand.catch(() => {});
+        await goToRoutePoint(PointCharger.point);
+        message.textContent = 'Маршрут отменён';
     } catch (error) {
-        message.textContent = 'Ошибка выполнения маршрута. Проверьте связь с роботом.';
-        console.error('Ошибка выполнения маршрута:', error);
+        message.textContent = 'Маршрут отменён, но отправить робота на зарядку не удалось. Проверьте связь.';
+        console.error('Ошибка возврата на зарядку:', error);
     } finally {
-        routeRunning = false;
+        routeCommand = null;
+        routeCancelling = false;
         updateRouteButtonsState();
     }
+}
+
+function routeDelay(milliseconds, signal) {
+    signal.throwIfAborted();
+    return new Promise((resolve, reject) => {
+        const onAbort = () => {
+            clearTimeout(timer);
+            reject(signal.reason);
+        };
+        const timer = setTimeout(() => {
+            signal.removeEventListener('abort', onAbort);
+            resolve();
+        }, milliseconds);
+        signal.addEventListener('abort', onAbort, { once: true });
+    });
 }
 
 async function goToRoutePoint(point) {
@@ -484,12 +547,13 @@ async function goToRoutePoint(point) {
     if (!response.ok) throw new Error(`Navigation HTTP ${response.status}`);
 }
 
-async function waitForArrival(point) {
+async function waitForArrival(point, signal) {
     let wasFar = false;
     let nearCount = 0;
 
     while (true) {
-        const response = await fetch(`${ROBOT_URL}/reeman/nav_status`);
+        signal.throwIfAborted();
+        const response = await fetch(`${ROBOT_URL}/reeman/nav_status`, { signal });
         if (!response.ok) throw new Error(`Navigation status HTTP ${response.status}`);
         const data = await response.json();
 
@@ -501,6 +565,6 @@ async function waitForArrival(point) {
             nearCount = 0;
         }
 
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await routeDelay(2000, signal);
     }
 }

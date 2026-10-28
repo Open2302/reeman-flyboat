@@ -81,6 +81,9 @@
 
         </section>
 
+        <footer class="route-status">
+            <p id="route-message" class="route-message" role="status" aria-live="polite">Маршрут не запущен</p>
+        </footer>
     </main>
 
     <div id="modal" class="route-overlay hidden">
@@ -117,11 +120,11 @@
                 </div>
             </div>
             <p class="route-hint">После последней остановки робот вернётся на зарядку.</p>
-            <div id="route-panel-footer" class="hidden">
+            <div id="route-panel-footer">
                 <button id="send-route-btn" type="button">Подтвердить маршрут →</button>
                 <button id="clear-route-btn" type="button">Очистить</button>
+                <button id="cancel-route-btn" type="button" disabled title="Отменить маршрут и вернуться на зарядку">Отменить маршрут</button>
             </div>
-            <p id="route-message" class="route-message" role="status" aria-live="polite"></p>
         </section>
     </div>
 

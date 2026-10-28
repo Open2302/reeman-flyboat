@@ -419,3 +419,61 @@ button:focus-visible { outline: 3px solid #e6aa32; outline-offset: 3px; }
 @media (prefers-reduced-motion: reduce) {
     .btn--point, #points-list button, #points-list-route li, #send-route-btn { transition: none; }
 }
+
+/* Кнопки занимают ширину пульта; снизу остаётся область состояния маршрута. */
+.panel { min-height: 0; height: 100dvh; }
+.content {
+    max-width: none;
+    flex: 1;
+    padding: 16px clamp(10px, 1.5vw, 24px);
+    justify-content: flex-start;
+}
+.points {
+    flex: 1;
+    grid-template-rows: repeat(3, minmax(56px, 1fr));
+    gap: clamp(10px, 1.5vh, 18px);
+}
+.btn--point { font-size: clamp(24px, 3.6vh, 38px); }
+.btn--action { padding: clamp(14px, 2.4vh, 24px) 10px; }
+.route-status {
+    flex-shrink: 0;
+    min-height: clamp(80px, 14vh, 140px);
+    display: grid;
+    place-items: center;
+    padding: 16px 24px;
+    border-top: 1px solid #dce2e7;
+    background: #eef1f4;
+}
+.route-status .route-message { padding: 0; font-size: clamp(18px, 2.5vh, 28px); font-weight: 700; }
+#cancel-route-btn {
+    border: 1px solid var(--crimson);
+    background: #fce6ed;
+    color: var(--crimson);
+    font-weight: 700;
+}
+#cancel-route-btn:hover { background: var(--crimson); color: white; }
+@media (max-width: 620px) {
+    .points { grid-template-rows: repeat(4, minmax(48px, 1fr)); }
+    .btn--point { font-size: 22px; }
+    .btn--action { font-size: 16px; }
+}
+@media (max-height: 620px) {
+    .panel__header { padding-top: 6px; padding-bottom: 6px; }
+    .logo__icon { width: 48px; height: 36px; }
+    .logo__name { font-size: 26px; }
+    .statusbar { gap: 8px; padding-top: 2px; padding-bottom: 2px; }
+    .statusbar__item { font-size: 18px; }
+    .battery { width: 64px; height: 64px; }
+    #mapIcon { width: 44px; height: 44px; }
+    .statusbar__icon--warn { width: 40px; height: 36px; }
+    .statusbar__dot { width: 20px; height: 20px; }
+    .content { padding-top: 8px; padding-bottom: 8px; gap: 10px; }
+    .points { grid-template-rows: repeat(3, minmax(32px, 1fr)); gap: 8px; }
+    .btn--point { font-size: 20px; }
+    .btn--action { padding: 8px; font-size: 16px; }
+    .route-status { min-height: 56px; padding: 10px 16px; }
+    .route-status .route-message { font-size: 18px; }
+}
+@media (max-height: 620px) and (max-width: 620px) {
+    .points { grid-template-rows: repeat(4, minmax(32px, 1fr)); }
+}
