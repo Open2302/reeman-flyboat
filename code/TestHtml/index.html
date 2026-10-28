@@ -55,6 +55,7 @@
 
         <!-- ===== Основное содержимое ===== -->
         <p id="connection-status" class="connection-status" role="status">Подключение к серверу…</p>
+        <p id="command-message" class="connection-status hidden" role="status" aria-live="polite"></p>
         <section class="content">
 
             <!-- Сетка кнопок точек -->
@@ -120,7 +121,7 @@
                     <ol id="points-list-route"></ol>
                 </div>
             </div>
-            <p class="route-hint">После последней остановки робот вернётся на зарядку.</p>
+            <p class="route-hint">На каждой рабочей точке робот опустит лифт и подождёт <span id="route-wait-label">2 мин</span>. После последней остановки вернётся на зарядку с поднятым лифтом.</p>
             <div id="route-panel-footer">
                 <button id="send-route-btn" type="button">Подтвердить маршрут →</button>
                 <button id="clear-route-btn" type="button">Очистить</button>
@@ -128,6 +129,16 @@
             </div>
         </section>
     </div>
+
+    <dialog id="navigation-confirm" class="navigation-confirm" aria-labelledby="navigation-confirm-title" aria-describedby="navigation-confirm-description">
+        <span class="eyebrow">СМЕНА НАПРАВЛЕНИЯ</span>
+        <h2 id="navigation-confirm-title">Вы хотите прервать направление?</h2>
+        <p id="navigation-confirm-description">Робот изменит текущую цель и отправится в точку <strong id="navigation-confirm-point"></strong>.</p>
+        <form method="dialog" class="navigation-confirm-actions">
+            <button id="navigation-keep-btn" type="submit" value="keep" autofocus>Оставить прежнее</button>
+            <button id="navigation-change-btn" type="submit" value="change">Да, изменить</button>
+        </form>
+    </dialog>
 
     <script src="main.js"></script>
 
