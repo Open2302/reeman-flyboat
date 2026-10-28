@@ -83,6 +83,48 @@
 
     </main>
 
+    <div id="modal" class="route-overlay hidden">
+        <section class="route-editor" role="dialog" aria-modal="true" aria-labelledby="route-title" tabindex="-1">
+            <button class="close-btn" type="button" aria-label="Закрыть">×</button>
+            <header class="route-header">
+                <span class="eyebrow">ПЛАНИРОВАНИЕ</span>
+                <h2 id="route-title">Новый маршрут</h2>
+                <p>Выберите точки в нужном порядке</p>
+            </header>
+            <div class="route-builder">
+                <div class="route-picker">
+                    <h3>Точки</h3>
+                    <div id="points-list">
+                        <button type="button">ОП1</button>
+                        <button type="button">ОП2</button>
+                        <button type="button">ОП3</button>
+                        <button type="button">ОП4</button>
+                        <button type="button">ОП5</button>
+                        <button type="button">ВП1</button>
+                        <button type="button">ВП2</button>
+                        <button type="button">ВП3</button>
+                        <button type="button">ВП4</button>
+                        <button type="button">ВП5</button>
+                        <button type="button">АС</button>
+                        <button type="button">ВП2.1-3.1</button>
+                        <button type="button">Зарядка</button>
+                    </div>
+                </div>
+                <div class="route-plan">
+                    <h3>Маршрут <span id="route-count">0</span></h3>
+                    <p id="route-empty">Маршрут пока пуст. Добавьте первую остановку.</p>
+                    <ol id="points-list-route"></ol>
+                </div>
+            </div>
+            <p class="route-hint">После последней остановки робот вернётся на зарядку.</p>
+            <div id="route-panel-footer" class="hidden">
+                <button id="send-route-btn" type="button">Подтвердить маршрут →</button>
+                <button id="clear-route-btn" type="button">Очистить</button>
+            </div>
+            <p id="route-message" class="route-message" role="status" aria-live="polite"></p>
+        </section>
+    </div>
+
     <script src="main.js"></script>
 
 </body>

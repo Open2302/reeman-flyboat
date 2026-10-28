@@ -260,3 +260,162 @@ body {
     height: 36px;
     flex-shrink: 0;
 }
+.battery-gif {
+    display: block;
+    width: 50px;
+    height: auto;
+    margin-top: 1px;
+}
+
+/* Пульт на всю область браузера */
+body { padding: 0; background: var(--panel-bg); align-items: stretch; }
+.panel { width: 100%; min-height: 100vh; min-height: 100dvh; box-shadow: none; display: flex; flex-direction: column; }
+.panel__header { padding: 18px clamp(20px, 5vw, 80px); }
+.content { flex: 1; width: 100%; max-width: 1600px; margin: auto; padding: clamp(24px, 5vh, 64px) clamp(20px, 5vw, 64px); display: flex; flex-direction: column; justify-content: center; }
+.btn--point { min-height: clamp(88px, 12vh, 140px); font-size: clamp(24px, 2.5vw, 36px); }
+.actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-top: 32px; }
+.btn--action { width: 100%; min-height: 80px; font-size: clamp(22px, 2vw, 30px); }
+.route-message { text-align: center; color: var(--navy); padding: 0 20px 20px; }
+.route-message:empty { display: none; }
+/* Компактный выбор точек сверху, маршрут на всю ширину */
+.hidden { display: none !important; }
+.modal-open { overflow: hidden; }
+.route-overlay { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 24px; background: #101c28a6; backdrop-filter: blur(8px); }
+.route-editor { position: relative; width: min(1000px, 100%); font-size: 18px; max-height: calc(100dvh - 48px); overflow-y: auto; padding: 32px; border-radius: 24px; background: white; color: var(--navy); box-shadow: 0 24px 80px #0004; }
+.route-header { padding-right: 36px; margin-bottom: 24px; }
+.eyebrow { color: var(--crimson); font-size: 11px; letter-spacing: .16em; font-weight: 700; }
+.route-header h2 { font-size: 36px; letter-spacing: -.03em; margin: 8px 0; }
+.route-header p, .route-hint { color: #7a8490; font-size: 17px; line-height: 1.5; }
+.route-editor button { cursor: pointer; border: none; border-radius: 10px; font: inherit; }
+.close-btn { position: absolute; top: 24px; right: 24px; width: 36px; height: 36px; background: #f0f3f5; color: #65717d; font-size: 26px !important; }
+.route-editor h3 { font-size: 20px; margin-bottom: 12px; }
+#points-list { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+#points-list button { min-height: 56px; padding: 8px 4px; background: #f3f5f7; color: var(--navy); font-weight: 700; }
+#points-list button:hover { background: #fce6ed; color: var(--crimson); }
+.route-plan { border-top: 1px solid #e9edf0; margin-top: 24px; padding-top: 24px; }
+#route-count { background: #fce6ed; color: var(--crimson); border-radius: 20px; padding: 3px 9px; margin-left: 6px; font-size: 12px; }
+#route-empty { padding: 32px 16px; text-align: center; color: #89939e; border: 1px dashed #dce2e7; border-radius: 14px; line-height: 1.6; }
+#points-list-route { list-style: none; counter-reset: stops; display: flex; flex-direction: column; gap: 8px; }
+#points-list-route li { counter-increment: stops; display: flex; align-items: center; gap: 12px; padding: 12px; background: #f6f8fa; border: 1px solid #e9edf0; border-radius: 12px; }
+#points-list-route li::before { content: counter(stops, decimal-leading-zero); color: var(--crimson); font-size: 12px; font-weight: 700; }
+.route-point-name { flex: 1; overflow-wrap: anywhere; font-weight: 700; }
+.route-point-actions { display: flex; gap: 4px; }
+.route-point-actions button { width: 44px; height: 44px; background: white; color: #617080; font-size: 18px; }
+.route-point-actions .delete-btn { color: var(--crimson); }
+.route-hint { margin: 20px 0 12px; }
+#route-panel-footer { display: flex; gap: 10px; flex-wrap: wrap; }
+#route-panel-footer button { padding: 18px 24px; font-size: 18px; font-weight: 700; }
+#send-route-btn { flex: 1; background: var(--navy); color: white; }
+#clear-route-btn { background: #f1f3f5; color: #687582; }
+button:disabled { opacity: .5; cursor: wait; }
+button:focus-visible { outline: 3px solid #e6aa32; outline-offset: 3px; }
+@media (max-width: 620px) {
+    .actions { grid-template-columns: 1fr; gap: 10px; }
+    .route-overlay { padding: 12px; }
+    .route-editor { padding: 24px 18px; max-height: calc(100dvh - 24px); border-radius: 18px; }
+    #points-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .route-header h2 { font-size: 26px; }
+}
+.statusbar__item { font-size: clamp(22px, 2vw, 30px); }
+
+/* Крупные значки пульта */
+.logo__icon { width: 128px; height: 110px; }
+.battery { width: 112px; height: 112px; }
+#mapIcon { width: 96px; height: 96px; }
+.statusbar__icon--warn { width: 86px; height: 78px; }
+.statusbar__dot { width: 42px; height: 42px; }
+@media (max-width: 620px) {
+    .logo__icon { width: 104px; height: 90px; }
+    .battery { width: 88px; height: 88px; }
+    #mapIcon { width: 78px; height: 78px; }
+    .statusbar__icon--warn { width: 70px; height: 64px; }
+    .statusbar { flex-wrap: wrap; justify-content: center; }
+}
+/* Размеры пульта зависят от высоты вкладки */
+.panel { height: 100dvh; min-height: 0; }
+.panel__header { flex-shrink: 0; padding: clamp(6px, 1.5vh, 16px) clamp(16px, 4vw, 64px); }
+.logo__icon { width: clamp(64px, 12vh, 128px); height: clamp(55px, 10vh, 110px); }
+.statusbar { flex-shrink: 0; flex-wrap: nowrap; gap: 12px; padding: 4px clamp(16px, 4vw, 64px); }
+.battery { width: clamp(128px, 21vh, 192px); height: clamp(100px, 19vh, 176px); }
+#mapIcon { width: clamp(56px, 11vh, 96px); height: clamp(56px, 11vh, 96px); }
+.statusbar__icon--warn { width: clamp(50px, 10vh, 86px); height: clamp(46px, 9vh, 78px); }
+.statusbar__dot { width: clamp(24px, 5vh, 42px); height: clamp(24px, 5vh, 42px); }
+.content { min-height: 0; margin: 0 auto; padding: clamp(10px, 2vh, 24px) clamp(16px, 4vw, 64px); gap: clamp(10px, 2vh, 24px); }
+.points { flex: 1; min-height: 0; grid-template-rows: repeat(3, minmax(0, 1fr)); gap: clamp(8px, 1.5vh, 16px); }
+.btn--point { min-height: 0; padding: 4px; font-size: clamp(20px, 3.5vh, 36px); }
+.actions { flex-shrink: 0; margin-top: 0; gap: 12px; }
+.btn--action { min-height: 0; padding: clamp(10px, 2vh, 20px) 8px; font-size: clamp(18px, 2.8vh, 28px); }
+.route-message { flex-shrink: 0; padding: 0 16px 8px; font-size: clamp(12px, 2vh, 18px); }
+@media (max-width: 620px) {
+    .statusbar { gap: 8px; padding: 4px 12px; flex-wrap: wrap; }
+    .battery { width: 124px; height: clamp(84px, 15vh, 124px); }
+    .statusbar__item { font-size: 18px; }
+    .statusbar__motion { gap: 6px; }
+    #mapIcon { width: 52px; height: 52px; }
+    .statusbar__icon--warn { width: 48px; height: 44px; }
+    .points { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(4, minmax(0, 1fr)); }
+    .actions { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+    .btn--action { font-size: 16px; overflow-wrap: anywhere; }
+}
+/* Компактные кнопки и прежний размер батареи */
+.battery { width: 112px; height: 112px; }
+.content { max-width: 1200px; }
+.points { flex: 0 1 auto; grid-template-rows: repeat(3, minmax(40px, 8vh)); }
+.btn--point { font-size: clamp(18px, 2.8vh, 26px); }
+.btn--action { padding: 10px 8px; font-size: clamp(16px, 2.4vh, 22px); }
+@media (max-width: 620px) {
+    .battery { width: 88px; height: 88px; }
+    .points { grid-template-rows: repeat(4, minmax(40px, 7vh)); }
+    .route-editor { padding: 20px 16px; }
+}
+/* Вертикальные списки, узкая колонка точек и просторный маршрут */
+.route-builder { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 20px; align-items: stretch; }
+.route-picker, .route-plan { min-width: 0; margin-top: 0; }
+#points-list { display: flex; flex-direction: column; gap: 8px; max-height: 46dvh; overflow-y: auto; }
+#points-list button { flex-shrink: 0; min-height: 48px; padding: 10px 8px; font-size: 18px; }
+#points-list-route { max-height: 46dvh; overflow-y: auto; }
+.route-point-name { font-size: 18px; }
+.route-point-actions button { width: 38px; height: 36px; font-size: 18px; }
+.content { max-width: 1440px; }
+.points { grid-template-rows: repeat(3, minmax(48px, 10vh)); }
+.btn--point { font-size: clamp(22px, 3.3vh, 32px); }
+.btn--action { padding: clamp(12px, 2.2vh, 20px) 10px; font-size: clamp(18px, 2.8vh, 26px); }
+@media (max-width: 620px) {
+    .route-builder { grid-template-columns: 110px minmax(0, 1fr); gap: 10px; }
+    .route-picker, .route-plan { padding: 10px; }
+    #points-list button { font-size: 16px; overflow-wrap: anywhere; }
+    #points-list-route li { flex-wrap: wrap; }
+    .route-point-name { font-size: 16px; }
+    .route-point-actions { margin-left: auto; }
+    .route-point-actions button { width: 30px; height: 30px; }
+    .points { grid-template-rows: repeat(4, minmax(40px, 8vh)); }
+    .btn--action { font-size: 16px; }
+}
+/* Единые цвета кнопок точек */
+.btn--point, #points-list button {
+    background: var(--crimson);
+    color: white;
+    box-shadow: inset 0 0 0 1px var(--crimson);
+}
+.btn--point:hover, #points-list button:hover {
+    background: white;
+    color: var(--crimson);
+    filter: none;
+}
+/* Небольшие завершающие детали */
+.btn--point, #points-list button {
+    transition: background-color .18s ease, color .18s ease, box-shadow .18s ease;
+    box-shadow: inset 0 0 0 1px var(--crimson), 0 3px 8px #8f123014;
+}
+.btn--point:hover, #points-list button:hover {
+    box-shadow: inset 0 0 0 1px var(--crimson), 0 4px 12px #8f12301c;
+}
+.route-editor { border: 1px solid #ffffff80; }
+#points-list-route li { transition: background-color .18s ease, border-color .18s ease; }
+#points-list-route li:hover { background: #f1f4f7; border-color: #dce2e8; }
+.route-point-actions button:hover, .close-btn:hover { background: #e6ebef; }
+#send-route-btn { transition: background-color .18s ease; }
+#send-route-btn:hover { background: #314d65; }
+@media (prefers-reduced-motion: reduce) {
+    .btn--point, #points-list button, #points-list-route li, #send-route-btn { transition: none; }
+}

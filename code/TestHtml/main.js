@@ -46,6 +46,9 @@ let emergencyDisplay;
 let LiftStatus = false;
 let BTNLift;
 let BTNRoute;
+let modalWindow, pointsList, routeList, routePanelFooter;
+let sendRouteBtn, clearRouteBtn, closeModal, openModal;
+let routeRunning = false;
 
 document.addEventListener('DOMContentLoaded', () => {
     OP1 = document.getElementById("op1")
@@ -152,9 +155,32 @@ document.addEventListener('DOMContentLoaded', () => {
     routeList?.addEventListener('click', handleRouteClick); 
     openModal?.addEventListener('click', () => {
         modalWindow?.classList.remove('hidden');
+        document.body.classList.add('modal-open');
+        closeModal?.focus();
     });
     closeModal?.addEventListener('click', () => {
         modalWindow?.classList.add('hidden');
+        document.body.classList.remove('modal-open');
+        BTNRoute.focus();
+    });
+    modalWindow.addEventListener('click', event => {
+        if (event.target === modalWindow) closeModal.click();
+    });
+    modalWindow.addEventListener('keydown', event => {
+        if (event.key === 'Escape') closeModal.click();
+        if (event.key === 'Tab') {
+            const buttons = [...modalWindow.querySelectorAll('button:not(:disabled)')]
+                .filter(button => button.getClientRects().length);
+            const first = buttons[0];
+            const last = buttons[buttons.length - 1];
+            if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault();
+                last.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault();
+                first.focus();
+            }
+        }
     });
     
     sendRouteBtn?.addEventListener('click', sendRoute);
@@ -406,6 +432,9 @@ async function handleRouteClick(event) {
 async function updateRouteButtonsState() {
     const hasPoints = routeList.children.length > 0;
     routePanelFooter.classList.toggle('hidden', !hasPoints);
+    document.getElementById('route-empty').classList.toggle('hidden', hasPoints);
+    document.getElementById('route-count').textContent = routeList.children.length;
+    sendRouteBtn.disabled = routeRunning;
 }
 
 async function clearRoute() {
@@ -414,19 +443,35 @@ async function clearRoute() {
 }
 
 async function sendRoute() {
+    if (routeRunning) return;
     const points = [...routeList.querySelectorAll('.route-point-name')]
         .map(el => el.textContent.trim());
 
     if (points.length === 0) return;
     if (points[points.length - 1] !== 'Зарядка') points.push('Зарядка');
 
+    const robotPointNames = { 'ВП4': PointVP4.point, 'ВП2.1-3.1': PointVP21_31.point };
+    routeRunning = true;
+    updateRouteButtonsState();
+    const message = document.getElementById('route-message');
+    try {
     for (let i = 0; i < points.length; i++) {
-        await goToRoutePoint(points[i]);
-        await waitForArrival(points[i]);
+        const point = robotPointNames[points[i]] || points[i];
+        message.textContent = `Маршрут выполняется: ${points[i]}`;
+        await goToRoutePoint(point);
+        await waitForArrival(point);
 
         if (i < points.length - 1) {
             await new Promise(resolve => setTimeout(resolve, 1000));   
         }
+    }
+    message.textContent = 'Маршрут завершён';
+    } catch (error) {
+        message.textContent = 'Ошибка выполнения маршрута. Проверьте связь с роботом.';
+        console.error('Ошибка выполнения маршрута:', error);
+    } finally {
+        routeRunning = false;
+        updateRouteButtonsState();
     }
 }
 
@@ -436,6 +481,7 @@ async function goToRoutePoint(point) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ point })
     });
+    if (!response.ok) throw new Error(`Navigation HTTP ${response.status}`);
 }
 
 async function waitForArrival(point) {
@@ -444,6 +490,7 @@ async function waitForArrival(point) {
 
     while (true) {
         const response = await fetch(`${ROBOT_URL}/reeman/nav_status`);
+        if (!response.ok) throw new Error(`Navigation status HTTP ${response.status}`);
         const data = await response.json();
 
         if (data.goal === point && Number(data.dist) > 0.2) wasFar = true;
