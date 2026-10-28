@@ -155,30 +155,10 @@ async function updateBatteryAndEmergency() {
     const data = await response.json();
 
     batteryDisplay.textContent = data.battery;
-    updateBatteryImage(data.battery, data.chargeFlag);
-}
 
-function updateBatteryImage(percent, chargeFlag) {
-    const batteryImage = document.getElementById("batteryAnimation");
+    chargeDisplay.textContent = data.chargeFlag == 2 ? "Да" : "Нет";
 
-    if (!batteryImage) return;
-
-    let imagePath;
-    const battery = Number(percent);
-
-    if (Number(chargeFlag) === 2 && battery <= 100) {
-        imagePath = "../reference/battery.gif";
-    } else if (battery >= 70) {
-        imagePath = "../reference/batteryFULL.png";
-    } else if (battery >= 20) {
-        imagePath = "../reference/batteryMEDIUM.png";
-    } else {
-        imagePath = "../reference/batteryLOW.png";
-    }
-
-    if (batteryImage.getAttribute("src") !== imagePath) {
-        batteryImage.setAttribute("src", imagePath);
-    }
+    emergencyDisplay.textContent = data.emergency == 0 ? "🔴" : "🟢";
 }
 
 async function updateGoal() {

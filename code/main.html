@@ -15,38 +15,79 @@
         <h2>Статус робота</h2>
     </header>
 
-    <div id="status">
-        <div>
-            <span class="label">Заряд батареи:</span>
-            <span class="value" id="battery">--</span>%
-            <img src="../reference/battery.gif" alt="Анимация зарядки батареи" id="batteryAnimation" class="battery-gif">
-        </div>
+<div id="status">
+    <div>
+        <span class="label">Заряд батареи:</span>
+        <span class="value" id="battery">--</span>%
+    </div>
 
-        <div>
-            <span class="label">⚡ :</span>
-            <span class="value" id="chargeFlag">--</span>
-        </div>
+    <div>
+        <span class="label">Дистанция:</span>
+        <span class="value" id="distance">--</span>
+    </div>
 
-        <div>
-            <span class="label">Место:</span>
-            <span class="value" id="goal">--</span>
-        </div>
+    <div>
+        <span class="label">⚡ :</span>
+        <span class="value" id="chargeFlag">--</span>
+    </div>
 
-        <div>
-            <span class="label">Скорость:</span>
-            <span class="value" id="speed">--</span> м/с
-        </div>
+    <div>
+        <span class="label">Место:</span>
+        <span class="value" id="goal">--</span>
+    </div>
 
-        <div>
-            <span class="label">Маршрут:</span>
-            <!-- <span class="value" id="speed">--</span> м/с -->
-        </div>
+    <div>
+        <span class="label">Скорость:</span>
+        <span class="value" id="speed">--</span> м/с
+    </div>
+        
+    <div>
+        <span class="label">Маршрут:</span>
+ <!-- <span class="value" id="speed">--</span> м/с -->
+    </div>
 
-        <div>
-            <span class="label">Аварийные кнопки:</span>
-            <span class="value" id="emergency">--</span>
+    <div>
+        <span class="label">Аварийные кнопки:</span>
+        <span class="value" id="emergency">--</span>
+    </div>
+    <div id ="modal" class="modal-overlay hidden">
+        <div  class="modal-content">
+            <div class="route-builder">
+                <div id ="points-panel" class ="panel">
+                    <h3>Точки</h3>
+                    <ul id ="points-list" class ="points-list">
+                        <li><button class="DotButton">ОП5</button></li>
+                            <li><button class="DotButton">ОП4</button></li>
+                            <li><button class="DotButton">ОП3</button></li>
+                            <li><button class="DotButton">ОП2</button></li>
+                            <li><button class="DotButton">ОП1</button></li>
+                            <li><button class="DotButton">АС</button></li>
+                            <li><button class="DotButton">ВП5</button></li>
+                            <li><button class="DotButton">ВП4_1</button></li>
+                            <li><button class="DotButton">ВП4_2</button></li>
+                            <li><button class="DotButton">ВП3</button></li>
+                            <li><button class="DotButton">ВП2</button></li>
+                            <li><button class="DotButton">ВП1</button></li>
+                            <li><button class="DotButton">ВП2.1,3.1</button></li>
+                            <li><button class="DotButton">Зарядка</button></li>
+                            <li><button class="DotButton">ворота</button></li>
+                            <li><button class="DotButton">склад</button></li>
+                 </ul>
+                </div>
+                <div id ="route-panel" class ="panel">
+                <h3>Маршрут</h3>
+                   <ol id="points-list-route" class="points-list route-order">
+                   </ol>
+                   <div id="route-panel-footer" class="route-panel-footer hidden">
+                        <button id="send-route-btn" type="button" class="route-panel-btn route-panel-btn--send">Отправить маршрут</button>
+                        <button id="clear-route-btn" type="button" class="route-panel-btn route-panel-btn--clear">Очистить</button>
+                    </div>
+                </div>
+            </div>    
+            <span class="close-btn">&times;</span>
         </div>
     </div>
+</div>
 
     <hr>
 
