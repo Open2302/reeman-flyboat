@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Пульт управления — Корпорация ПСС</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+    <main class="panel">
+
+        <!-- ===== Шапка с логотипом ===== -->
+
+        <header class="panel__header">
+            <div class="logo">
+                <img class="logo__icon" src="/assets/pss1.png" alt="Логотип корпорации ПСС">
+
+                <div class="logo__text">
+                    <span class="logo__caption">® КОРПОРАЦИЯ</span>
+                    <span class="logo__name">ПСС</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- ===== Статус-бар ===== -->
+        <section class="statusbar">
+
+            <!-- батарейка -->
+            <img id="StatusBattery" class="battery" src="/assets/batteryLOW.png" alt="Заряд батареи" title="Заряд батареи" />
+
+            <!-- точка -->
+            <div id="StatusPoint" class="statusbar__item">Точка:&nbsp; Зарядка</div>
+
+            <!-- движение + индикатор -->
+            <div id="StatusMov" class="statusbar__item statusbar__motion">
+                <span id="speed">Стоит</span>
+                <span class="statusbar__dot"></span>
+            </div>
+
+            <!-- Карта -->
+            <img id="mapIcon" class="statusbar__icon" src="/assets/map.png" alt="Карта" />
+
+            <!-- предупреждение -->
+            <svg id="emergencyIcon" class="statusbar__icon statusbar__icon--warn" viewBox="0 0 34 30" role="img" aria-label="Состояние аварийной кнопки неизвестно" style="color: #8b8b8b">
+        <title>Состояние аварийной кнопки неизвестно</title>
+        <path d="M17 3 L31 27 H3 Z" fill="currentColor" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/>
+        <rect x="15.4" y="10" width="3.2" height="10" rx="1.6" fill="#ffffff"/>
+        <circle cx="17" cy="24" r="2" fill="#ffffff"/>
+      </svg>
+
+        </section>
+
+        <!-- ===== Основное содержимое ===== -->
+        <p id="connection-status" class="connection-status" role="status">Подключение к серверу…</p>
+        <p id="command-message" class="connection-status hidden" role="status" aria-live="polite"></p>
+        <section class="content">
+
+            <!-- Сетка кнопок точек -->
+            <div class="points">
+                <button id="op1" class="btn btn--point">ОП1</button>
+                <button id="op2" class="btn btn--point">ОП2</button>
+                <button id="op3" class="btn btn--point">ОП3</button>
+                <button id="op4" class="btn btn--point">ОП4</button>
+                <button id="op5" class="btn btn--point">ОП5</button>
+                <button id="vp1" class="btn btn--point">ВП1</button>
+                <button id="vp2" class="btn btn--point">ВП2</button>
+                <button id="vp3" class="btn btn--point">ВП3</button>
+                <button id="vp4" class="btn btn--point">ВП4</button>
+                <button id="vp5" class="btn btn--point">ВП5</button>
+                <button id="as" class="btn btn--point">АС</button>
+                <button id="vp2.1-3.1" class="btn btn--point">ВП2.1-3.1</button>
+            </div>
+
+            <!-- Нижние кнопки действий -->
+            <div class="actions">
+                <button id="lift" class="btn btn--action btn--lift">Вызов лифта</button>
+                <button id="charger" class="btn btn--action btn--charge">Зарядка</button>
+                <button id="route" class="btn btn--action btn--route">Маршрут</button>
+            </div>
+
+        </section>
+
+        <footer class="route-status">
+            <p id="route-message" class="route-message" role="status" aria-live="polite">Маршрут не запущен</p>
+        </footer>
+    </main>
+
+    <div id="modal" class="route-overlay hidden">
+        <section class="route-editor" role="dialog" aria-modal="true" aria-labelledby="route-title" tabindex="-1">
+            <button class="close-btn" type="button" aria-label="Закрыть">×</button>
+            <header class="route-header">
+                <span class="eyebrow">ПЛАНИРОВАНИЕ</span>
+                <h2 id="route-title">Новый маршрут</h2>
+                <p>Выберите точки в нужном порядке</p>
+            </header>
+            <div class="route-builder">
+                <div class="route-picker">
+                    <h3>Точки</h3>
+                    <div id="points-list">
+                        <button type="button">ОП1</button>
+                        <button type="button">ОП2</button>
+                        <button type="button">ОП3</button>
+                        <button type="button">ОП4</button>
+                        <button type="button">ОП5</button>
+                        <button type="button">ВП1</button>
+                        <button type="button">ВП2</button>
+                        <button type="button">ВП3</button>
+                        <button type="button">ВП4</button>
+                        <button type="button">ВП5</button>
+                        <button type="button">АС</button>
+                        <button type="button">ВП2.1-3.1</button>
+                        <button type="button">Зарядка</button>
+                    </div>
+                </div>
+                <div class="route-plan">
+                    <h3>Маршрут <span id="route-count">0</span></h3>
+                    <p id="route-empty">Маршрут пока пуст. Добавьте первую остановку.</p>
+                    <ol id="points-list-route"></ol>
+                </div>
+            </div>
+            <p class="route-hint">На каждой рабочей точке робот опустит лифт и подождёт <span id="route-wait-label">2 мин</span>. После последней остановки вернётся на зарядку с поднятым лифтом.</p>
+            <div id="route-panel-footer">
+                <button id="send-route-btn" type="button">Подтвердить маршрут →</button>
+                <button id="clear-route-btn" type="button">Очистить</button>
+                <button id="cancel-route-btn" type="button" disabled title="Отменить маршрут и вернуться на зарядку">Отменить маршрут</button>
+            </div>
+        </section>
+    </div>
+
+    <dialog id="navigation-confirm" class="navigation-confirm" aria-labelledby="navigation-confirm-title" aria-describedby="navigation-confirm-description">
+        <span class="eyebrow">СМЕНА НАПРАВЛЕНИЯ</span>
+        <h2 id="navigation-confirm-title">Вы хотите прервать направление?</h2>
+        <p id="navigation-confirm-description">Робот изменит текущую цель и отправится в точку <strong id="navigation-confirm-point"></strong>.</p>
+        <form method="dialog" class="navigation-confirm-actions">
+            <button id="navigation-keep-btn" type="submit" value="keep" autofocus>Оставить прежнее</button>
+            <button id="navigation-change-btn" type="submit" value="change">Да, изменить</button>
+        </form>
+    </dialog>
+
+    <script src="main.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,12 @@
+.git
+.env
+.venv
+**/__pycache__
+**/*.py[cod]
+backend/data
+**/*.sqlite3*
+**/*.lock
+.vscode
+README.md
+backend/README.md
+web-api.md
