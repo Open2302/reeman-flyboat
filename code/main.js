@@ -66,9 +66,7 @@ async function performAction(path, body) {
     try {
         applyState(await api(path, body));
     } catch (error) {
-        clientMessage = error.message;
-        clientMessageUntil = Date.now() + 6000;
-        showCommandMessage(clientMessage);
+        reportCommandError(error);
         // A timed-out POST may already be committed: refresh before any retry.
         await refreshState();
     } finally {
@@ -118,6 +116,12 @@ function applyState(state) {
 function showCommandMessage(message) {
     byId('command-message').textContent = message;
     byId('command-message').classList.toggle('hidden', !message);
+}
+
+function reportCommandError(error) {
+    clientMessage = error.message;
+    clientMessageUntil = Date.now() + 6000;
+    showCommandMessage(clientMessage);
 }
 
 async function refreshTelemetry() {
@@ -192,7 +196,7 @@ function updateBatteryAndEmergency(data) {
     const image = Number(data.chargeFlag) === 2 ? 'battery.gif' :
         battery >= 80 ? 'batteryFULL.png' : battery >= 30 ? 'batteryMEDIUM.png' : 'batteryLOW.png';
     const icon = byId('StatusBattery');
-    if (!icon.src.endsWith(image)) icon.src = `../../reference/${image}`;
+    if (!icon.src.endsWith(image)) icon.src = `/assets/${image}`;
     icon.title = `Заряд батареи: ${data.battery}%`;
     const emergency = byId('emergencyIcon');
     const value = String(data.emergencyButton);
@@ -247,7 +251,7 @@ function updateRouteButtonsState() {
     const map = byId('mapIcon');
     const routeRunning = route?.kind === 'route' && active;
     const image = routeRunning ? 'mapActive.gif' : 'map.png';
-    if (!map.src.endsWith(image)) map.src = `../../reference/${image}`;
+    if (!map.src.endsWith(image)) map.src = `/assets/${image}`;
     map.title = routeRunning ? 'Маршрут выполняется' : 'Нет активного маршрута';
 }
 
@@ -288,18 +292,16 @@ function clearRoute() {
     if (serverState) saveDraft([]);
 }
 
-async function GoToPoint(point, confirmation) {
+async function goToPoint(point, confirmation) {
     if (!backendConnected || !serverState || isRouteLocked(serverState.route) || navigationConfirmationPending) return;
     try {
         applyState(await api('/api/navigate', { point, confirmation }));
     } catch (error) {
         if (error.code === 'confirmation_required') {
-            if (await confirmNavigation(point)) return GoToPoint(point, error.confirmation);
+            if (await confirmNavigation(point)) return goToPoint(point, error.confirmation);
             return;
         }
-        clientMessage = error.message;
-        clientMessageUntil = Date.now() + 6000;
-        showCommandMessage(clientMessage);
+        reportCommandError(error);
     }
 }
 
@@ -323,18 +325,15 @@ function confirmNavigation(point) {
     });
 }
 
-async function LiftUD() {
-    if (liftPending || !serverState) return;
+async function toggleLift() {
+    if (liftPending || !serverState || isRouteLocked(serverState.route)) return;
     liftPending = true;
     updateRouteButtonsState();
     try {
-        const routeActive = isRouteLocked(serverState.route);
-        const direction = !routeActive && serverState.lift.last_command === 'up' ? 'down' : 'up';
+        const direction = serverState.lift.last_command === 'up' ? 'down' : 'up';
         applyState(await api('/api/lift', { direction }));
     } catch (error) {
-        clientMessage = error.message;
-        clientMessageUntil = Date.now() + 6000;
-        showCommandMessage(clientMessage);
+        reportCommandError(error);
     } finally {
         liftPending = false;
         updateRouteButtonsState();
@@ -345,10 +344,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (location.protocol === 'file:') return;
     document.querySelector('.points').addEventListener('click', event => {
         const button = event.target.closest('button');
-        if (button && !button.disabled) GoToPoint(button.textContent.trim());
+        if (button && !button.disabled) goToPoint(button.textContent.trim());
     });
-    byId('charger').addEventListener('click', () => GoToPoint('Зарядка'));
-    byId('lift').addEventListener('click', LiftUD);
+    byId('charger').addEventListener('click', () => goToPoint('Зарядка'));
+    byId('lift').addEventListener('click', toggleLift);
     byId('points-list').addEventListener('click', addList);
     byId('points-list-route').addEventListener('click', handleRouteClick);
     byId('send-route-btn').addEventListener('click', sendRoute);

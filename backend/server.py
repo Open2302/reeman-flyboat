@@ -5,7 +5,9 @@ import copy
 import json
 import logging
 import math
+import os
 import re
+import signal
 import sqlite3
 import threading
 import time
@@ -14,7 +16,7 @@ from contextlib import contextmanager
 from concurrent.futures import ThreadPoolExecutor
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.error import HTTPError, URLError
+from urllib.error import HTTPError
 from urllib.parse import unquote, urlsplit
 from urllib.request import Request, urlopen
 
@@ -27,7 +29,9 @@ POINTS.update(f"ВП{i}" for i in range(1, 6) if i != 4)
 ACTIVE = {"running", "returning"}
 POLL_INTERVAL = 0.5
 FRESH_SECONDS = 5
-TIMING_FILE = ROOT / 'code/TestHtml/main.js'
+WEB_ROOT = ROOT / 'code'
+ASSET_ROOT = WEB_ROOT / 'assets'
+TIMING_FILE = WEB_ROOT / 'main.js'
 ROBOT_PATHS = {"base": "/reeman/base_encode", "speed": "/reeman/speed", "nav": "/reeman/nav_status"}
 
 
@@ -79,7 +83,6 @@ def initial_state():
         "route": {"status": "idle", "message": "Маршрут не запущен", "points": []},
         "robot": {name: {"data": {}, "updated_at": 0, "error": "Нет данных"}
                   for name in ("base", "speed", "nav")},
-        "motion": {"stopped": None, "candidate": None, "count": 0},
         "navigation": {"status": "idle", "message": ""},
         "stationary": {"point": None, "since": None, "last_sample": None},
         # Last accepted lift command, not a physical position sensor.
@@ -135,7 +138,9 @@ class Robot:
             if not isinstance(result, dict):
                 raise ValueError("Expected a JSON object")
             return result
-        except (OSError, URLError, HTTPError, ValueError) as error:
+        except (OSError, ValueError) as error:
+            if isinstance(error, HTTPError):
+                error.close()
             raise APIError("Нет связи с роботом или неверный ответ API", 502) from error
 
     def read(self, name):
@@ -184,6 +189,7 @@ class Controller:
         self.watch_timing = timing is None
         self.timing_signature = TIMING_FILE.stat().st_mtime_ns
         state = store.state
+        state.pop('motion', None)  # Motion display is computed from direct GETs in the panel.
         state.setdefault('navigation', {'status': 'idle', 'message': ''})
         state.setdefault('stationary', {'point': None, 'since': None, 'last_sample': None})
         # Migrate old manual calls out of the route state without resending them.
@@ -369,17 +375,6 @@ class Controller:
             self.observe_emergency()
             self.expire_navigation_notice()
             self.refresh_timing()
-            motion = self.state['motion']
-            speed = number(samples['speed']['data'].get('vx'))
-            distance = number(samples['nav']['data'].get('dist'))
-            if self.fresh('speed') and speed is not None:
-                stopped = abs(speed) <= 0.001 and not (self.fresh('nav') and distance is not None and distance >= 1)
-                motion['count'] = min(3, motion['count'] + 1) if motion['candidate'] == stopped else 1
-                motion['candidate'] = stopped
-                if motion['count'] >= 3:
-                    motion['stopped'] = stopped
-            else:
-                motion.update(candidate=None, count=0, stopped=None)
             self.stationary_tick()
             self.store.save()
         self.wake_event.set()
@@ -664,6 +659,8 @@ def handler_for(controller):
             path = unquote(urlsplit(self.path).path)
             if path == "/api/state":
                 return self.json_response(200, controller.snapshot())
+            if path == '/api/health':
+                return self.json_response(200, {'status': 'ok'})
             if path.startswith('/api/telemetry/'):
                 name = path.rsplit('/', 1)[-1]
                 if name not in ROBOT_PATHS:
@@ -674,16 +671,12 @@ def handler_for(controller):
                 if not fresh:
                     return self.json_response(503, {'error': 'Нет свежих данных робота'})
                 return self.json_response(200, sample['data'])
-            allowed = {"/": ROOT / "code/TestHtml/index.html",
-                       "/code/TestHtml/index.html": ROOT / "code/TestHtml/index.html",
-                       "/main.js": ROOT / "code/TestHtml/main.js",
-                       "/style.css": ROOT / "code/TestHtml/style.css",
-                       "/code/TestHtml/main.js": ROOT / "code/TestHtml/main.js",
-                       "/code/TestHtml/style.css": ROOT / "code/TestHtml/style.css"}
+            allowed = {'/': WEB_ROOT / 'index.html', '/index.html': WEB_ROOT / 'index.html',
+                       '/main.js': WEB_ROOT / 'main.js', '/style.css': WEB_ROOT / 'style.css'}
             file = allowed.get(path)
-            if path.startswith("/reference/"):
-                candidate = (ROOT / path.lstrip("/")).resolve()
-                if candidate.is_relative_to((ROOT / "reference").resolve()) and candidate.suffix.lower() in (".png", ".gif", ".svg", ".jpg", ".jpeg", ".webp"):
+            if path.startswith('/assets/'):
+                candidate = (ASSET_ROOT / path.removeprefix('/assets/')).resolve()
+                if candidate.is_relative_to(ASSET_ROOT.resolve()) and candidate.suffix.lower() in (".png", ".gif", ".svg", ".jpg", ".jpeg", ".webp"):
                     file = candidate
             if file is None or not file.is_file():
                 return self.json_response(404, {"error": "Не найдено"})
@@ -726,7 +719,7 @@ def handler_for(controller):
                 self.json_response(500, {"error": "Ошибка сервера"})
 
         def log_message(self, format, *args):
-            if self.path != "/api/state" and not self.path.startswith('/api/telemetry/'):
+            if self.path not in ('/api/state', '/api/health') and not self.path.startswith('/api/telemetry/'):
                 logging.info(format, *args)
 
     return Handler
@@ -740,7 +733,7 @@ def single_instance(path):
         handle.write(b"0")
         handle.flush()
         handle.seek(0)
-        if __import__("os").name == "nt":
+        if os.name == "nt":
             import msvcrt
             msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
         else:
@@ -749,16 +742,30 @@ def single_instance(path):
         yield
 
 
-def main():
+def parse_args(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8000)
-    parser.add_argument("--robot-url", default="http://10.6.20.95")
+    parser.add_argument("--robot-url", default=os.environ.get('ROBOT_URL', 'http://10.6.20.95'))
     parser.add_argument("--db", type=Path)
-    parser.add_argument("--demo", action="store_true", help="Simulated robot; no real robot requests")
-    args = parser.parse_args()
+    parser.add_argument('--data-dir', type=Path, default=Path(os.environ.get('DATA_DIR', str(Path(__file__).parent / 'data'))))
+    demo = os.environ.get('DEMO', 'false').strip().lower()
+    if demo not in ('true', 'false', '1', '0'):
+        parser.error('DEMO must be true, false, 1 or 0')
+    parser.add_argument('--demo', action=argparse.BooleanOptionalAction, default=demo in ('true', '1'),
+                        help='Simulated robot; no real robot requests (or DEMO=true)')
+    return parser.parse_args(argv)
+
+
+def handle_shutdown_signal(signum, frame):
+    raise KeyboardInterrupt
+
+
+def main():
+    args = parse_args()
+    signal.signal(signal.SIGTERM, handle_shutdown_signal)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
-    database = args.db or Path(__file__).parent / "data" / ("demo.sqlite3" if args.demo else "robot.sqlite3")
+    database = args.db or args.data_dir / ('demo.sqlite3' if args.demo else 'robot.sqlite3')
     database.parent.mkdir(parents=True, exist_ok=True)
     with single_instance(database):
         store = Store(database)

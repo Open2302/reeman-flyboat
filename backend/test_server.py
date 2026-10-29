@@ -11,7 +11,7 @@ from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from server import APIError, CHARGER, Controller, Robot, Store, ThreadingHTTPServer, handler_for, BaseHTTPRequestHandler, load_timing
+from server import APIError, ASSET_ROOT, CHARGER, Controller, Robot, Store, ThreadingHTTPServer, handler_for, BaseHTTPRequestHandler, load_timing, parse_args
 
 
 class FakeRobot:
@@ -637,16 +637,6 @@ class ControllerTests(unittest.TestCase):
         self.assertEqual(self.navigation_commands(), [CHARGER, CHARGER])
         self.assertEqual(self.controller.snapshot()["route"]["status"], "completed")
 
-    def test_motion_uses_distance_and_three_confirmations(self):
-        self.robot.goal, self.robot.distance = "ОП1", 3
-        self.tick(3)
-        self.assertFalse(self.controller.snapshot()["motion"]["stopped"])
-        self.robot.distance = 0.5
-        self.tick(2)
-        self.assertFalse(self.controller.snapshot()["motion"]["stopped"])
-        self.tick()
-        self.assertTrue(self.controller.snapshot()["motion"]["stopped"])
-
     def test_last_lift_command_persists(self):
         self.controller.action("/api/lift", {"direction": "up"})
         self.controller.poll()
@@ -693,26 +683,45 @@ class ControllerTests(unittest.TestCase):
         try:
             with urlopen(base + "/") as response:
                 self.assertIn(b"connection-status", response.read())
+            for path in ('/index.html', '/main.js', '/style.css'):
+                with urlopen(base + path) as response:
+                    self.assertEqual(response.status, 200)
+                    self.assertTrue(response.read())
+            for asset in ASSET_ROOT.iterdir():
+                with urlopen(base + '/assets/' + asset.name) as response:
+                    self.assertEqual(response.read(), asset.read_bytes())
+            with urlopen(base + '/api/health') as response:
+                self.assertEqual(json.load(response), {'status': 'ok'})
             request = Request(base + "/api/draft", data=json.dumps({"points": ["ОП1"], "version": 0}).encode(),
                               headers={"Content-Type": "application/json", "Origin": base})
             with urlopen(request) as response:
                 self.assertEqual(json.load(response)["draft"]["points"], ["ОП1"])
             with urlopen(base + "/api/state") as response:
                 self.assertEqual(json.load(response)["draft"]["version"], 1)
-            for path in ("/backend/data/robot.sqlite3", "/reference/../README.md", "/.git/config"):
+            for path in ('/backend/data/robot.sqlite3', '/assets/../../README.md', '/assets/../main.js', '/.git/config', '/.env'):
                 with self.assertRaises(HTTPError) as error:
                     urlopen(base + path)
                 self.assertEqual(error.exception.code, 404)
+                error.exception.close()
             request = Request(base + "/api/route/start", data=b'{"version":1}',
                               headers={"Content-Type": "application/json", "Origin": "http://other-site"})
             with self.assertRaises(HTTPError) as error:
                 urlopen(request)
             self.assertEqual(error.exception.code, 403)
+            error.exception.close()
             self.assertEqual(self.robot.commands, [])
         finally:
             server.shutdown()
             server.server_close()
             thread.join(3)
+
+    def test_container_environment_and_cli_override(self):
+        with patch.dict('os.environ', {'DEMO': 'true', 'ROBOT_URL': 'http://test-robot:8080', 'DATA_DIR': self.temp.name}):
+            args = parse_args([])
+            self.assertTrue(args.demo)
+            self.assertEqual(args.robot_url, 'http://test-robot:8080')
+            self.assertEqual(args.data_dir, Path(self.temp.name))
+            self.assertFalse(parse_args(['--no-demo']).demo)
 
 
 if __name__ == "__main__":
